@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Explore Alleppey — Luxury Backwater Escapes</title>
+  <title>Nauka — Luxury Backwater Escapes</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,7 +16,6 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- QRCode.js for QR generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <!-- Razorpay Payment Gateway -->
   
 
   <script>
@@ -474,14 +473,6 @@
     /* Hidden QR for PDF generation */
     #qr-generator-hidden { position:absolute; left:-9999px; top:-9999px; opacity:0; pointer-events:none; }
 
-    /* ── Payment Modal ── */
-    #paymentModal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(8,46,35,0.6); backdrop-filter:blur(8px); align-items:flex-end; justify-content:center; }
-    #paymentModal.open { display:flex; animation:modalBg 0.3s ease both; }
-    .payment-sheet { animation: sheetUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both; max-height:92vh; overflow-y:auto; }
-    .pay-method-card { border:2px solid transparent; transition:all 0.25s ease; cursor:pointer; border-radius:1rem; padding:1rem; background:white; }
-    .pay-method-card.selected { border-color:var(--emerald); background:var(--emerald-mist); }
-    .pay-method-card:not(.selected):hover { border-color:#d1d5db; }
-
     /* ── Add/Edit Listing Modal ── */
     #listingModal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(8,46,35,0.55); backdrop-filter:blur(6px); align-items:flex-end; justify-content:center; }
     #listingModal.open { display:flex; animation:modalBg 0.3s ease both; }
@@ -496,6 +487,13 @@
     #previewModal.open { display:flex; animation:modalBg 0.3s ease both; }
     .preview-sheet { animation: sheetUp 0.4s cubic-bezier(0.34,1.56,0.64,1) both; max-height:92vh; overflow-y:auto; }
   
+
+    /* ── Nauka logo ── */
+    .nk-logo { display:block; width:auto; height:auto; max-width:100%; object-fit:contain; background:transparent !important; }
+    .nk-logo-white { filter: brightness(0) invert(1); }
+    .nk-logo-white.nk-ready { filter: none; }
+    .nk-hero-logo { height:56px; filter: brightness(0) invert(1) drop-shadow(0 2px 14px rgba(0,0,0,.35)); }
+    .nk-hero-logo.nk-ready { filter: drop-shadow(0 2px 14px rgba(0,0,0,.35)); }
     /* ── Journeys / FAQ (from Nauka variant) ── */
     .glass-panel { background: rgba(255,255,255,0.94); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(226,232,240,0.8); }
     .shadow-luxury { box-shadow: 0 10px 30px -10px rgba(10,25,47,0.06), 0 4px 12px rgba(0,0,0,0.03); }
@@ -504,6 +502,50 @@
     /* WhatsApp concierge button — kept inside the 480px app column */
     .whatsapp-fab { position: fixed; z-index: 90; right: max(1rem, calc(50% - 224px)); bottom: calc(92px + env(safe-area-inset-bottom, 0px)); }
   </style>
+  <link rel="icon" type="image/png" href="https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png" />
+  <link rel="apple-touch-icon" href="https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png" />
+  <meta name="theme-color" content="#0d4f3c" />
+  <!-- Nauka logo helpers: white variant for dark surfaces + PDFs (visual only) -->
+  <script>
+    var NK_LOGO_URL = 'https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png';
+    var _nkLogo = null; /* { data, ratio } once processed */
+    function nkLogoLoad() {
+      return new Promise(function (resolve) {
+        var im = new Image();
+        im.crossOrigin = 'anonymous';
+        im.onload = function () {
+          try {
+            var c = document.createElement('canvas');
+            c.width = im.naturalWidth; c.height = im.naturalHeight;
+            var x = c.getContext('2d');
+            x.drawImage(im, 0, 0);
+            var d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+            /* dark ink -> white ink; keeps transparency, and turns a white backdrop transparent */
+            for (var i = 0; i < p.length; i += 4) {
+              var lum = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
+              p[i + 3] = Math.min(p[i + 3], 255 - lum);
+              p[i] = p[i + 1] = p[i + 2] = 255;
+            }
+            x.putImageData(d, 0, 0);
+            _nkLogo = { data: c.toDataURL('image/png'), ratio: c.width / c.height };
+          } catch (e) { _nkLogo = null; }
+          resolve(_nkLogo);
+        };
+        im.onerror = function () { resolve(null); };
+        im.src = NK_LOGO_URL;
+      });
+    }
+    function nkLogoPdf(doc, x, y, h) {
+      if (!_nkLogo) return false;
+      try { doc.addImage(_nkLogo.data, 'PNG', x, y, h * _nkLogo.ratio, h, '', 'FAST'); return true; } catch (e) { return false; }
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      nkLogoLoad().then(function (l) {
+        if (!l) return; /* CSS filter fallback stays in place */
+        document.querySelectorAll('img.nk-logo-white').forEach(function (img) { img.src = l.data; img.classList.add('nk-ready'); });
+      });
+    });
+  </script>
 </head>
 
 <body class="max-w-[480px] mx-auto relative min-h-screen bg-pearl">
@@ -516,7 +558,7 @@
 <!-- ═══════════════════════════════════════
      AUTH LAUNCH SHEET — bottom sheet
 ═══════════════════════════════════════ -->
-<div id="auth-sheet" role="dialog" aria-modal="true" aria-label="Welcome to Explore Alleppey">
+<div id="auth-sheet" role="dialog" aria-modal="true" aria-label="Welcome to Nauka">
   <div class="px-6 pt-4 pb-8">
 
     <!-- Drag handle -->
@@ -541,7 +583,7 @@
       </div>
       <div class="absolute inset-0 flex flex-col items-end justify-center pb-4 pr-0">
         <div class="w-full flex items-center justify-center" style="padding-top:1.5rem;">
-          <p class="font-display italic leading-none" style="font-size:1.45rem; font-weight:600; background: linear-gradient(135deg, #e8c97a 0%, #c9a84c 50%, #e8c97a 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Explore Alleppey</p>
+          <img src="https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png" alt="Nauka" class="nk-logo nk-logo-white" style="height:42px;" />
         </div>
       </div>
     </div>
@@ -757,7 +799,7 @@
   <section class="relative h-[62vh] min-h-[380px] overflow-hidden">
     <!-- Feature 1: Clean img tag with hero-new.jpg fallback to reliable image -->
     <img
-      src="https://res.cloudinary.com/dxmuistk4/image/upload/v1779854673/file_00000000e538720c80f7a2a1919f38ed_mlvlyj.png"
+      src="https://res.cloudinary.com/dxmuistk4/image/upload/v1791012715/file_0000000016d881fab57398e9bedd4f97_hzhchp.png"
       alt="Alappuzha backwaters at golden hour"
       class="absolute inset-0 w-full h-full object-cover"
       loading="eager"
@@ -767,7 +809,7 @@
 
     <!-- Hero Text -->
     <div class="absolute bottom-0 left-0 right-0 px-5 pb-7 z-10">
-      <h1 class="font-display text-white leading-none mb-1" style="font-size:2.1rem; font-weight:500; letter-spacing:-0.01em; white-space:nowrap;">Explore <em style="font-style:italic; font-weight:500;">Alleppey</em></h1>
+      <h1 class="leading-none mb-2"><img src="https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png" alt="Nauka" class="nk-logo nk-logo-white nk-hero-logo" loading="eager" /></h1>
       <p class="text-white/75 text-sm font-body mb-2 font-light">God's Own Country • Kerala, India</p>
     </div>
 
@@ -1176,10 +1218,10 @@
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M3 20h18M3 10l9-6 9 6v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 20V12h6v8"/></svg>
           </div>
           <div class="text-left">
-            <img src="https://res.cloudinary.com/dxmuistk4/image/upload/v1779871123/file_0000000094a47206a7951f278eec84dc_mxkb95.png"
-              alt="Explore Alleppey"
-              class="h-7 w-auto object-contain"
-              style="filter: brightness(0) invert(1);"
+            <img src="https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png"
+              alt="Nauka"
+              class="nk-logo nk-logo-white"
+              style="height:34px;"
             />
             <p class="text-white/60 text-[10px] font-body tracking-wider uppercase mt-0.5">Booking Confirmed</p>
           </div>
@@ -1280,7 +1322,7 @@
       </button>
       <!-- Text logo — same style, single line, no image -->
       <div class="relative z-10 flex flex-col items-center text-center">
-        <h1 class="font-display mb-1 leading-none" style="font-size:2.1rem; font-weight:300; font-style:italic; letter-spacing:0.01em; background: linear-gradient(135deg, #e8c97a 0%, #c9a84c 50%, #e8c97a 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Explore Alleppey</h1>
+        <h1 class="mb-2 leading-none"><img src="https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png" alt="Nauka" class="nk-logo nk-logo-white" style="height:52px;" /></h1>
         <p class="text-white/65 text-xs font-body tracking-widest">God's Own Country • Kerala, India</p>
       </div>
     </div>
@@ -1296,7 +1338,7 @@
         </button>
         <button id="tab-agent" onclick="switchLoginTab('agent')" class="login-tab flex-1 py-2 text-sm font-semibold font-body rounded-xl text-center">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="inline -mt-0.5 mr-1"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          Operator
+          Admin
         </button>
       </div>
 
@@ -1353,15 +1395,15 @@
               <i class="fa-solid fa-star text-gold text-sm"></i>
             </div>
             <div>
-              <p class="font-body font-semibold text-ink text-sm">Operator Portal</p>
-              <p class="text-gray-500 text-xs font-body">For Houseboat, Shikara & Homestay operators</p>
+              <p class="font-body font-semibold text-ink text-sm">Admin Portal</p>
+              <p class="text-gray-500 text-xs font-body">Manage every property, fleet and booking</p>
             </div>
           </div>
         </div>
 
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold font-body text-gray-500 uppercase tracking-wider mb-1.5">Operator ID / Email</label>
+            <label class="block text-xs font-semibold font-body text-gray-500 uppercase tracking-wider mb-1.5">Admin Username</label>
             <input type="email" id="agent-login-email" placeholder="operator@yourbusiness.com" class="input-login" />
           </div>
           <div>
@@ -1370,16 +1412,8 @@
           </div>
 
           <button onclick="loginAsAgent()" class="btn-gold w-full text-white font-semibold text-sm rounded-2xl py-4 font-body">
-            <i class="fa-solid fa-shield-check mr-2"></i>Access Operator Dashboard
+            <i class="fa-solid fa-shield-check mr-2"></i>Access Admin Portal
           </button>
-
-          <div class="bg-emerald-mist rounded-2xl p-4">
-            <p class="text-emerald text-xs font-body font-medium mb-1">
-              <i class="fa-solid fa-circle-info mr-1.5"></i>New operator?
-            </p>
-            <p class="text-gray-600 text-xs font-body">Submit your listing for review. Our team will verify your property and onboard you within 48 hours.</p>
-            <span class="text-emerald text-xs font-semibold cursor-pointer font-body">Register as Operator →</span>
-          </div>
         </div>
       </div>
 
@@ -1793,130 +1827,6 @@
 
 
 <!-- ═══════════════════════════════════════
-     PAYMENT MODAL — Razorpay Integration
-═══════════════════════════════════════ -->
-<div id="paymentModal" role="dialog" aria-modal="true" aria-label="Payment">
-  <div class="absolute inset-0" onclick="closePaymentModal()"></div>
-  <div class="payment-sheet glass rounded-t-4xl w-full max-w-[480px] relative z-10 shadow-float" style="background:rgba(250,249,247,0.98);">
-    <div class="flex justify-center pt-3 pb-1">
-      <div class="w-10 h-1 rounded-full bg-gray-300"></div>
-    </div>
-    <div class="px-6 pb-8 pt-3">
-      <div class="flex items-center justify-between mb-5">
-        <div>
-          <h3 class="font-display text-2xl font-light text-ink">Secure <em>Payment</em></h3>
-          <p class="text-gray-400 text-xs font-body mt-0.5 flex items-center gap-1"><i class="fa-solid fa-lock text-emerald text-[10px]"></i> SSL Encrypted · Powered by Razorpay</p>
-        </div>
-        <button onclick="closePaymentModal()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition">
-          <i class="fa-solid fa-xmark text-gray-500 text-sm"></i>
-        </button>
-      </div>
-
-      <!-- Order Summary -->
-      <div class="bg-emerald rounded-2xl p-4 mb-5 relative overflow-hidden">
-        <div class="absolute inset-0 opacity-10"><svg viewBox="0 0 300 100" class="w-full h-full"><circle cx="260" cy="-10" r="70" fill="none" stroke="white" stroke-width="1.5"/></svg></div>
-        <div class="relative">
-          <p class="text-white/60 text-xs font-body uppercase tracking-wider mb-1">Booking Summary</p>
-          <p id="pay-property-name" class="text-white font-display text-xl font-light leading-tight mb-2"></p>
-          <div class="flex items-center justify-between">
-            <div>
-              <p id="pay-details" class="text-white/70 text-xs font-body"></p>
-              <p id="pay-booking-id" class="text-white/50 text-[10px] font-body font-mono mt-0.5"></p>
-            </div>
-            <div class="text-right">
-              <p class="text-white/60 text-xs font-body">Total</p>
-              <p id="pay-total" class="text-gold-light font-body font-bold text-2xl"></p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Payment Method Selection -->
-      <div class="mb-5">
-        <p class="text-xs font-semibold font-body text-gray-500 uppercase tracking-wider mb-3">Choose Payment Method</p>
-        <div class="space-y-2" id="pay-method-list">
-          <div class="pay-method-card selected" onclick="selectPayMethod('upi')" id="pay-m-upi">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-              </div>
-              <div class="flex-1">
-                <p class="font-body font-semibold text-ink text-sm">UPI</p>
-                <p class="text-gray-400 text-xs font-body">GPay, PhonePe, BHIM, Paytm</p>
-              </div>
-              <div class="w-5 h-5 rounded-full border-2 border-emerald flex items-center justify-center" id="radio-upi">
-                <div class="w-2.5 h-2.5 rounded-full bg-emerald"></div>
-              </div>
-            </div>
-          </div>
-          <div class="pay-method-card" onclick="selectPayMethod('card')" id="pay-m-card">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/><line x1="6" y1="15" x2="10" y2="15"/></svg>
-              </div>
-              <div class="flex-1">
-                <p class="font-body font-semibold text-ink text-sm">Credit / Debit Card</p>
-                <p class="text-gray-400 text-xs font-body">Visa, Mastercard, RuPay</p>
-              </div>
-              <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center" id="radio-card"></div>
-            </div>
-          </div>
-          <div class="pay-method-card" onclick="selectPayMethod('netbanking')" id="pay-m-netbanking">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-mist flex items-center justify-center flex-shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d4f3c" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><path d="M3 6l9-3 9 3"/><path d="M4 12v7h16v-7"/></svg>
-              </div>
-              <div class="flex-1">
-                <p class="font-body font-semibold text-ink text-sm">Net Banking</p>
-                <p class="text-gray-400 text-xs font-body">All major Indian banks</p>
-              </div>
-              <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center" id="radio-netbanking"></div>
-            </div>
-          </div>
-          <div class="pay-method-card" onclick="selectPayMethod('wallet')" id="pay-m-wallet">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-gold-pale flex items-center justify-center flex-shrink-0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c9a84c" stroke-width="2"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4z"/></svg>
-              </div>
-              <div class="flex-1">
-                <p class="font-body font-semibold text-ink text-sm">Wallets</p>
-                <p class="text-gray-400 text-xs font-body">Paytm, Amazon Pay, Mobikwik</p>
-              </div>
-              <div class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center" id="radio-wallet"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Trust badges -->
-      <div class="flex items-center justify-center gap-4 mb-5 py-3 bg-gray-50 rounded-2xl">
-        <div class="flex items-center gap-1.5 text-xs text-gray-500 font-body">
-          <i class="fa-solid fa-shield-halved text-emerald"></i>256-bit SSL
-        </div>
-        <div class="w-px h-4 bg-gray-200"></div>
-        <div class="flex items-center gap-1.5 text-xs text-gray-500 font-body">
-          <i class="fa-solid fa-rotate-left text-emerald"></i>Free Cancellation
-        </div>
-        <div class="w-px h-4 bg-gray-200"></div>
-        <div class="flex items-center gap-1.5 text-xs text-gray-500 font-body">
-          <i class="fa-solid fa-headset text-emerald"></i>24/7 Support
-        </div>
-      </div>
-
-      <button onclick="initiateRazorpayPayment()" id="pay-btn" class="btn-gold w-full rounded-2xl py-4 text-white font-bold text-base font-body shadow-gold flex items-center justify-center gap-2">
-        <i class="fa-solid fa-lock"></i>
-        Pay <span id="pay-btn-amount"></span> Securely
-      </button>
-      <p class="text-center text-[11px] text-gray-400 font-body mt-3 flex items-center justify-center gap-1.5">
-        <img src="https://razorpay.com/favicon.ico" alt="Razorpay" class="w-3 h-3" onerror="this.style.display='none'"/>
-        Powered by Razorpay · Your payment info is never stored
-      </p>
-    </div>
-  </div>
-</div>
-
-
-<!-- ═══════════════════════════════════════
      ADD / EDIT LISTING MODAL
 ═══════════════════════════════════════ -->
 <div id="listingModal" role="dialog" aria-modal="true" aria-label="Add or Edit Listing">
@@ -2127,7 +2037,7 @@
         </div>
 
         <button onclick="submitAvailabilityRequest()" class="btn-emerald w-full rounded-2xl py-4 text-white font-bold text-base font-body flex items-center justify-center gap-2">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          <i class="fa-brands fa-whatsapp text-xl"></i>
           Check Availability
         </button>
         <p class="text-center text-xs text-gray-400 font-body flex items-center justify-center gap-1">
@@ -3988,22 +3898,14 @@ async function downloadTicketPDF() {
 
   // Try to embed logo image
   try {
-    const logoUrl = 'https://res.cloudinary.com/dxmuistk4/image/upload/v1779871123/file_0000000094a47206a7951f278eec84dc_mxkb95.png';
-    const resp = await fetch(logoUrl);
-    const blob = await resp.blob();
-    const b64 = await new Promise(res => {
-      const r = new FileReader();
-      r.onload = () => res(r.result);
-      r.readAsDataURL(blob);
-    });
-    // Render logo white (it may be dark; we try rendering as-is at small size)
-    doc.addImage(b64, 'PNG', 8, 8, 50, 14, '', 'FAST');
+    if (!_nkLogo) await nkLogoLoad();
+    if (!nkLogoPdf(doc, 8, 8, 14)) throw new Error('logo unavailable');
   } catch(e) {
     // Fallback text logo
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('EXPLORE ALLEPPEY', 8, 18);
+    doc.text('NAUKA', 8, 18);
   }
 
   doc.setFont('helvetica', 'normal');
@@ -4182,11 +4084,11 @@ async function downloadTicketPDF() {
   doc.setFontSize(6);
   doc.setTextColor(255, 255, 255);
   doc.setGState(new doc.GState({ opacity: 0.7 }));
-  doc.text("Explore Alleppey  ·  God's Own Country, Kerala, India", W / 2, H - 12, { align: 'center' });
+  doc.text("Nauka  ·  God's Own Country, Kerala, India", W / 2, H - 12, { align: 'center' });
   doc.text('support@explorealleppey.in  ·  +91 477 222 1234', W / 2, H - 6, { align: 'center' });
   doc.setGState(new doc.GState({ opacity: 1 }));
 
-  doc.save(`Alleppey_Booking_${bd.bookingId || 'ticket'}.pdf`);
+  doc.save(`Nauka_Booking_${bd.bookingId || 'ticket'}.pdf`);
 }
 
 /* ─────────────────────────────────────────
@@ -4234,14 +4136,11 @@ async function printBookingPDF() {
 
   // Logo
   try {
-    const logoUrl = 'https://res.cloudinary.com/dxmuistk4/image/upload/v1779871123/file_0000000094a47206a7951f278eec84dc_mxkb95.png';
-    const resp = await fetch(logoUrl);
-    const blob = await resp.blob();
-    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob); });
-    doc.addImage(b64, 'PNG', 14, 12, 55, 15, '', 'FAST');
+    if (!_nkLogo) await nkLogoLoad();
+    if (!nkLogoPdf(doc, 14, 12, 16)) throw new Error('logo unavailable');
   } catch(e) {
     doc.setFont('times', 'bolditalic'); doc.setFontSize(13); doc.setTextColor(255,255,255);
-    doc.text('Explore Alleppey', 14, 22);
+    doc.text('Nauka', 14, 22);
   }
 
   // "Official Booking Confirmation" label
@@ -4323,7 +4222,7 @@ async function printBookingPDF() {
   doc.setGState(new doc.GState({ opacity: 1 })); y += 8;
 
   doc.setFont('times', 'bold'); doc.setFontSize(9); doc.setTextColor(...GRAY);
-  doc.text('Total Amount Paid', 22, y);
+  doc.text('Total Amount', 22, y);
   doc.setFont('times', 'bold'); doc.setFontSize(16); doc.setTextColor(...EMERALD);
   doc.text(`₹${bd.totalAmount ? bd.totalAmount.toLocaleString('en-IN') : '0'}`, W - 16, y, { align: 'right' });
   y += 22;
@@ -4375,7 +4274,7 @@ async function printBookingPDF() {
   doc.setFillColor(...GOLD); doc.rect(0, H - 22, W, 1.5, 'F');
   doc.setFont('times','italic'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
   doc.setGState(new doc.GState({ opacity: 0.8 }));
-  doc.text("Explore Alleppey  ·  God's Own Country, Kerala, India", W/2, H - 13, {align:'center'});
+  doc.text("Nauka  ·  God's Own Country, Kerala, India", W/2, H - 13, {align:'center'});
   doc.setFontSize(6.5);
   doc.text('support@explorealleppey.in  ·  +91 477 222 1234  ·  www.explorealleppey.in', W/2, H - 7, {align:'center'});
   doc.setGState(new doc.GState({ opacity: 1 }));
@@ -4428,7 +4327,7 @@ async function printBookingPDF() {
     'Complimentary welcome drink and fresh coconut water on arrival',
     'Guided backwater cruise through narrow canals and open lakes',
     'Life jackets and safety equipment provided on board',
-    ' 24/7 guest support via the Explore Alleppey platform',
+    ' 24/7 guest support via the Nauka platform',
   ]);
 
   section('Cancellation Policy', [
@@ -4454,7 +4353,7 @@ async function printBookingPDF() {
 
   // Thank you message
   doc.setFont('times','bolditalic'); doc.setFontSize(13); doc.setTextColor(...EMERALD);
-  doc.text('Thank you for choosing Explore Alleppey', W/2, y2, { align: 'center' }); y2 += 8;
+  doc.text('Thank you for choosing Nauka', W/2, y2, { align: 'center' }); y2 += 8;
   doc.setFont('times','italic'); doc.setFontSize(8.5); doc.setTextColor(...GRAY);
   doc.text('We wish you a magical journey through God\'s Own Country.', W/2, y2, { align: 'center' });
 
@@ -4463,7 +4362,7 @@ async function printBookingPDF() {
   doc.setFillColor(...GOLD); doc.rect(0, H-22, W, 1.5, 'F');
   doc.setFont('times','italic'); doc.setFontSize(7.5); doc.setTextColor(255,255,255);
   doc.setGState(new doc.GState({ opacity: 0.8 }));
-  doc.text("Explore Alleppey  ·  God's Own Country, Kerala, India", W/2, H-13, {align:'center'});
+  doc.text("Nauka  ·  God's Own Country, Kerala, India", W/2, H-13, {align:'center'});
   doc.setFontSize(6.5);
   doc.text('support@explorealleppey.in  ·  +91 477 222 1234  ·  www.explorealleppey.in', W/2, H-7, {align:'center'});
   doc.setGState(new doc.GState({ opacity: 1 }));
@@ -4479,7 +4378,7 @@ async function printBookingPDF() {
   if (printWin) {
     printWin.addEventListener('load', () => { printWin.focus(); printWin.print(); });
   } else {
-    doc.save(`Alleppey_Print_${bd.bookingId || 'ticket'}.pdf`);
+    doc.save(`Nauka_Print_${bd.bookingId || 'ticket'}.pdf`);
   }
 }
 
@@ -4743,8 +4642,7 @@ function renderProfileView(username, email) {
           ['fa-user','Personal Info','Update your name, phone & address', 'openEditProfileSheet()'],
           ['fa-bell','Notifications','Manage alerts & reminders', ''],
           ['fa-shield-halved','Privacy & Security','Password, 2FA & data settings', ''],
-          ['fa-credit-card','Payment Methods','Cards & UPI linked to your account', ''],
-          ['fa-gift','Loyalty Rewards','Your points & referral benefits', ''],
+                    ['fa-gift','Loyalty Rewards','Your points & referral benefits', ''],
           ['fa-language','Language & Region','English (IN) • ₹ INR', ''],
         ].map(([icon, label, sub, action]) => `
           <div class="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50 transition cursor-pointer" ${action ? `onclick="${action}"` : ''}>
@@ -5126,213 +5024,6 @@ function epShuffleAvatar() {
   let idx = Math.floor(Math.random() * PROFILE_AVATARS.length);
   if (idx === _ep.avatarIdx && PROFILE_AVATARS.length > 1) idx = (idx + 1) % PROFILE_AVATARS.length;
   _epSelectAvatar(idx);
-}
-
-/* ─────────────────────────────────────────
-   RAZORPAY CONFIG — Test Key
-   Replace with your live key for production
-───────────────────────────────────────── */
-const RAZORPAY_KEY = 'rzp_test_SujHZ26CXVm4ER';
-
-/* ─────────────────────────────────────────
-   PAYMENT FLOW
-───────────────────────────────────────── */
-let _pendingBookingData = null;
-let _selectedPayMethod = 'upi';
-
-function proceedToPayment() {
-  const dateInput = document.getElementById('booking-date');
-  const adultsInput = document.getElementById('booking-adults');
-  const childrenInput = document.getElementById('booking-children');
-  const nightsInput = document.getElementById('booking-nights');
-  const date = dateInput.value;
-  const adults = parseInt(adultsInput.value) || 1;
-  const children = parseInt(childrenInput.value) || 0;
-  const nights = parseInt(nightsInput.value);
-
-  if (!date) {
-    showBookingError('Please select a check-in date to continue.');
-    dateInput.classList.add('shake');
-    setTimeout(() => dateInput.classList.remove('shake'), 500);
-    return;
-  }
-  const selectedDate = new Date(date);
-  const today = new Date(); today.setHours(0,0,0,0);
-  if (selectedDate < today) {
-    showBookingError('Check-in date cannot be in the past.');
-    return;
-  }
-  if (adults < 1) { showBookingError('Please add at least 1 adult guest.'); return; }
-
-  const price = state.selectedProperty.price;
-  const subtotal = price * nights;
-  const serviceFee = Math.round(subtotal * 0.05);
-  const totalAmount = subtotal + serviceFee;
-  const bookingId = 'ALP-' + Math.random().toString(36).substring(2, 8).toUpperCase();
-  const formattedDate = new Date(date + 'T00:00:00').toLocaleDateString('en-IN', {
-    weekday:'short', day:'numeric', month:'long', year:'numeric',
-  });
-  const guestStr = [
-    adults + ' Adult' + (adults > 1 ? 's' : ''),
-    children > 0 ? children + ' Child' + (children > 1 ? 'ren' : '') : ''
-  ].filter(Boolean).join(', ');
-
-  _pendingBookingData = {
-    propertyName: state.selectedProperty.title,
-    propertyCategory: state.selectedProperty.category,
-    location: state.selectedProperty.location,
-    host: state.selectedProperty.host,
-    date: formattedDate, rawDate: date,
-    guests: adults + children, adults, children, guestStr, nights, subtotal, serviceFee, totalAmount, bookingId, price,
-  };
-
-  closeBookingModal();
-
-  // Populate payment modal
-  document.getElementById('pay-property-name').textContent = state.selectedProperty.title;
-  document.getElementById('pay-details').textContent = `${guestStr} · ${nights} Night${nights>1?'s':''} · Check-in ${formattedDate}`;
-  document.getElementById('pay-booking-id').textContent = `Ref: ${bookingId}`;
-  document.getElementById('pay-total').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
-  document.getElementById('pay-btn-amount').textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
-
-  _selectedPayMethod = 'upi';
-  selectPayMethod('upi');
-  document.getElementById('paymentModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-
-function closePaymentModal() {
-  document.getElementById('paymentModal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-function selectPayMethod(method) {
-  _selectedPayMethod = method;
-  const methods = ['upi', 'card', 'netbanking', 'wallet'];
-  methods.forEach(m => {
-    const card = document.getElementById('pay-m-' + m);
-    const radio = document.getElementById('radio-' + m);
-    if (!card || !radio) return;
-    if (m === method) {
-      card.classList.add('selected');
-      radio.innerHTML = '<div class="w-2.5 h-2.5 rounded-full bg-emerald"></div>';
-      radio.style.borderColor = 'var(--emerald)';
-    } else {
-      card.classList.remove('selected');
-      radio.innerHTML = '';
-      radio.style.borderColor = '#d1d5db';
-    }
-  });
-}
-
-function initiateRazorpayPayment() {
-  if (!_pendingBookingData) return;
-  const bd = _pendingBookingData;
-
-  // Amount in paise (multiply by 100)
-  const amountPaise = bd.totalAmount * 100;
-
-  const options = {
-    key: RAZORPAY_KEY,
-    amount: amountPaise,
-    currency: 'INR',
-    name: 'Explore Alleppey',
-    description: `${bd.propertyName} · ${bd.nights} Night${bd.nights>1?'s':''}`,
-    image: 'https://res.cloudinary.com/dxmuistk4/image/upload/v1779871123/file_0000000094a47206a7951f278eec84dc_mxkb95.png',
-    order_id: '', // Pass server-generated order_id in production
-    prefill: {
-      name: state.loggedInUser ? (state.profileDisplayName || state.loggedInUser.username) : '',
-      email: state.loggedInUser ? state.loggedInUser.email : '',
-      contact: state.profilePhone ? '+91' + state.profilePhone.replace(/\D/g,'') : '',
-    },
-    notes: {
-      booking_id: bd.bookingId,
-      property: bd.propertyName,
-      check_in: bd.rawDate,
-      guests: bd.guestStr,
-    },
-    theme: { color: '#0d4f3c' },
-    method: _selectedPayMethod === 'upi' ? undefined : _selectedPayMethod,
-    handler: function(response) {
-      // Payment success callback
-      onPaymentSuccess(response);
-    },
-    modal: {
-      ondismiss: function() {
-        // User closed Razorpay window without paying
-        document.getElementById('paymentModal').classList.add('open');
-        document.body.style.overflow = 'hidden';
-      }
-    }
-  };
-
-  // Close our modal before opening Razorpay
-  closePaymentModal();
-
-  try {
-    const rzp = new Razorpay(options);
-    rzp.on('payment.failed', function(response) {
-      onPaymentFailed(response.error);
-    });
-    rzp.open();
-  } catch(e) {
-    // Razorpay script may not load in offline/demo mode — simulate success
-    console.warn('Razorpay unavailable, using demo mode:', e.message);
-    simulatePaymentSuccess();
-  }
-}
-
-function onPaymentSuccess(response) {
-  if (!_pendingBookingData) return;
-  const bd = _pendingBookingData;
-  // Store payment ID in booking data
-  bd.paymentId = response.razorpay_payment_id || 'PAY-DEMO';
-  bd.paymentStatus = 'paid';
-
-  // Finalise booking
-  state.bookingData = { ...bd };
-  state.userBookings.unshift({ ...bd });
-  persistState();
-  renderMyBookings();
-
-  document.getElementById('success-property-name').textContent = bd.propertyName;
-  document.getElementById('success-date').textContent = bd.date;
-  document.getElementById('success-guests').textContent = `${bd.guestStr} · ${bd.nights} Night${bd.nights > 1 ? 's' : ''}`;
-  document.getElementById('success-price').textContent = `₹${bd.totalAmount.toLocaleString('en-IN')}`;
-  document.getElementById('success-booking-id').textContent = bd.bookingId;
-  document.getElementById('success-host').textContent = bd.host;
-
-  const qrContainer = document.getElementById('ticket-qr-container');
-  qrContainer.innerHTML = '';
-  new QRCode(qrContainer, {
-    text: `BOOKING:${bd.bookingId}|PROPERTY:${bd.propertyName}|DATE:${bd.rawDate}|GUESTS:${bd.guests}|PAY:${bd.paymentId}`,
-    width: 56, height: 56,
-    colorDark: '#0d4f3c', colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.M,
-  });
-
-  _pendingBookingData = null;
-  showView('success');
-}
-
-function onPaymentFailed(error) {
-  // Re-open payment modal with error message
-  document.getElementById('paymentModal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  // Show a toast-style error
-  const btn = document.getElementById('pay-btn');
-  if (btn) {
-    const orig = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> Payment failed — Try again';
-    btn.style.background = '#dc2626';
-    setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 3000);
-  }
-}
-
-function simulatePaymentSuccess() {
-  // Demo mode: simulate Razorpay payment success for testing
-  const fakeResponse = { razorpay_payment_id: 'pay_DEMO_' + Date.now() };
-  onPaymentSuccess(fakeResponse);
 }
 
 /* ─────────────────────────────────────────
@@ -5820,7 +5511,7 @@ function openTourDetail(id) {
     id: t.id, title: t.title, subtitle: t.subtitle,
     category: 'tour', location: 'Alappuzha, Kerala',
     price: t.price, rating: t.rating, reviews: t.reviews,
-    host: 'Explore Alleppey Tours', description: t.description,
+    host: 'Nauka Tours', description: t.description,
     amenities: t.includes.map(i => ({ icon: 'fa-check', label: i })),
     image: t.image, gallery: [t.image, t.image, t.image],
   };
@@ -5844,7 +5535,6 @@ function openTourDetail(id) {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeBookingModal();
-    closePaymentModal();
     closeListingModal();
     closePreviewModal();
     closeNotifPanel();
@@ -6056,7 +5746,7 @@ document.addEventListener('DOMContentLoaded', init);
             </div>
             <p class="text-white/50 text-[10px] font-body tracking-widest uppercase">Super Admin Console</p>
           </div>
-          <h2 class="text-white font-display text-2xl font-light">Explore <em style="color:#e8c97a;">Alleppey</em></h2>
+          <h2 class="leading-none"><img src="https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png" alt="Nauka" class="nk-logo nk-logo-white" style="height:34px;" /></h2>
           <p class="text-white/40 text-xs font-body mt-0.5">Full Platform Control</p>
         </div>
         <div class="flex items-center gap-3">
@@ -7207,12 +6897,13 @@ function submitAvailabilityRequest() {
   state.userBookings.unshift(booking);
   persistState();
 
-  const msg = `NEW HOUSEBOAT BOOKING REQUEST — NAUKA\n\n` +
-    `Booking Reference: ${ref}\nGuests: ${guestStr}\nCheck-in: ${formatDate(date)}\nCheck-out: ${formatDate(checkOut)}\n` +
-    `Route: ${route}\nHouseboat: ${p.title}\nBoarding: ${BOARDING_POINT}\n\n` +
-    `Requesting availability verification and applicable price quote. Thank you!`;
+  const gName=(state.profileDisplayName||(state.loggedInUser&&state.loggedInUser.username)||'Guest');
+  const msg = `Hello! I’m interested in booking a houseboat and would like to check the availability and details.\n\n` +
+    `*→ Guest Details*\n• Name: ${gName}\n• Guests: ${guestStr}\n• Check-in: ${formatDate(date)}\n• Check-out: ${formatDate(checkOut)}\n• Houseboat: ${p.title}\n• Rooms: ${p.bedrooms||'—'}\n\n` +
+    `Please share the availability, package details, inclusions, and final pricing.\n\nThank you. I look forward to hearing from you.`;
 
   closeBookingModal();
+  try{sessionStorage.setItem('nk_wa_pending',String(Date.now()))}catch(e){}
   openWhatsApp(msg);
   state.bookingFilter = 'pending';
   showView('mybookings');
@@ -7327,7 +7018,8 @@ function _bookingPDF(b) {
   const done = b.status === 'completed';
   doc.setFillColor(...EM); doc.rect(0, 0, 210, 44, 'F');
   doc.setFillColor(...GOLD); doc.rect(0, 44, 210, 2, 'F');
-  doc.setTextColor(255,255,255); doc.setFont('times','bolditalic'); doc.setFontSize(24); doc.text('Explore Alleppey', 15, 20);
+  doc.setTextColor(255,255,255);
+  if (!nkLogoPdf(doc, 15, 9, 15)) { doc.setFont('times','bolditalic'); doc.setFontSize(24); doc.text('Nauka', 15, 20); }
   doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(232,201,122);
   doc.text('LUXURY BACKWATER ESCAPES  |  KERALA, INDIA', 15, 28);
   doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(11);
@@ -7374,7 +7066,7 @@ function _bookingPDF(b) {
   doc.setFont('helvetica','normal'); doc.setFontSize(8);
   doc.text(doc.splitTextToSize('Please quote booking reference #' + b.reference + ' on arrival at the Punnamada Finishing Point jetty. Carry a valid photo ID for every guest.', 166), 22, y + 13);
   doc.setFontSize(8); doc.setTextColor(148,163,184);
-  doc.text('Explore Alleppey  |  God\'s Own Country, Kerala, India', 105, 285, { align: 'center' });
+  doc.text('Nauka  |  God\'s Own Country, Kerala, India', 105, 285, { align: 'center' });
   return doc;
 }
 function downloadBookingPDF(id) { const b = _get(id); if (b) _bookingPDF(b).save('NAUKA-' + b.reference + '.pdf'); }
@@ -7410,5 +7102,652 @@ window.NaukaBookingBridge = {
 document.addEventListener('DOMContentLoaded', () => { updateRouteNotices(); if (window.lucide) lucide.createIcons(); });
 
 </script>
+<!-- ═══════ UPGRADE LAYER: Operator portal + Admin console ═══════ -->
+<style>
+  .xcard{background:#fff;border:1px solid #eef0ef;border-radius:1.25rem;box-shadow:0 4px 24px rgba(13,79,60,.07)}
+  .xchip{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap}
+  .s-pending{background:#fef3c7;color:#92400e}.s-quoted{background:#e0f2fe;color:#075985}.s-confirmed{background:#e8f2ee;color:#0d4f3c}
+  .s-completed{background:#e5e7eb;color:#374151}.s-declined{background:#fee2e2;color:#991b1b}.s-qdeclined{background:#ffedd5;color:#9a3412}.s-active{background:#e8f2ee;color:#0d4f3c}.s-suspended{background:#fee2e2;color:#991b1b}
+  .xbtn{font:700 12px 'Plus Jakarta Sans',sans-serif;padding:.65rem 1rem;border-radius:.85rem;transition:all .2s}
+  .xbtn-em{background:var(--emerald);color:#fff}.xbtn-gold{background:linear-gradient(135deg,#c9a84c,#e8c97a);color:#082e23}
+  .xbtn-out{background:#fff;border:1.5px solid #e5e7eb;color:#1a1a18}.xbtn-red{background:#fee2e2;color:#991b1b}
+  .xin{width:100%;border:1.5px solid #e5e7eb;border-radius:.8rem;padding:.65rem .9rem;font:500 .9rem 'Plus Jakarta Sans',sans-serif;background:#fff;outline:none}
+  .xin:focus{border-color:var(--emerald);box-shadow:0 0 0 3px rgba(13,79,60,.1)}
+  .xlbl{display:block;font:700 10px 'Plus Jakarta Sans',sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.35rem}
+  #xsheet{display:none;position:fixed;inset:0;z-index:1300;background:rgba(8,46,35,.55);backdrop-filter:blur(6px);align-items:flex-end;justify-content:center}
+  #xsheet.open{display:flex}
+  #xsheet .sh{width:100%;max-width:480px;max-height:92vh;overflow-y:auto;background:#faf9f7;border-radius:2rem 2rem 0 0;padding:1.1rem 1.25rem 2rem;animation:sheetUp .4s cubic-bezier(.34,1.2,.64,1) both}
+  .cal{aspect-ratio:1;border-radius:.7rem;border:1.5px solid #eef0ef;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',sans-serif;line-height:1.15}
+  .cal b{font-size:12px;color:#1a1a18}.cal i{font-style:normal;font-size:8.5px;color:#6b7280;font-weight:600}
+  .cal.we{background:var(--gold-pale);border-color:#efdca4}.cal.ov{border-color:var(--emerald);box-shadow:inset 0 0 0 1px var(--emerald)}
+  .cal.bl{background:#f3f4f6;opacity:.6}.cal.bl b{text-decoration:line-through}.cal.off{visibility:hidden}
+  #view-admin{background:#f3f5f4!important}
+  .adtab{flex-shrink:0;font:700 12px 'Plus Jakarta Sans',sans-serif;padding:.55rem .95rem;border-radius:.8rem;color:#64748b;background:#fff;border:1px solid #e5e7eb}
+  .adtab.on{background:#082e23;color:#e8c97a;border-color:#082e23}
+  .adth{font:700 10px 'Plus Jakarta Sans',sans-serif;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em}
+</style>
+
+<nav id="op-nav" class="pill-nav" style="display:none">
+  <button data-t="overview" onclick="OP.tab('overview')" class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span class="nav-label">Overview</span></button>
+  <button data-t="enquiries" onclick="OP.tab('enquiries')" class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><span class="nav-label">Bookings</span></button>
+  <button data-t="fleet" onclick="OP.tab('fleet')" class="nav-item"><i class="fa-solid fa-ship nav-icon" style="font-size:17px;text-align:center"></i><span class="nav-label">Fleet</span></button>
+  <button data-t="profile" onclick="OP.tab('profile')" class="nav-item"><svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg><span class="nav-label">Profile</span></button>
+</nav>
+
+<script>
+(function(){
+'use strict';
+/* ── helpers ── */
+const $=id=>document.getElementById(id), E=s=>escapeHTML(s);
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const winDays=()=>Array.from({length:90},(_,i)=>{const d=today();d.setDate(d.getDate()+i);return iso(d)});
+const inWin=s=>{const w=winDays();return s>=w[0]&&s<=w[89]};
+const isWE=s=>[5,6].includes(parse(s).getDay()); // Fri & Sat nights
+const inr=n=>'₹'+Number(n).toLocaleString('en-IN');
+const short=p=>p>=1000?(p/1000).toFixed(p%1000?1:0)+'k':String(p);
+const amt=b=>Number(String(b.price||'').replace(/[^\d]/g,''))||0;
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+function toast(m,bad){const t=document.createElement('div');t.textContent=m;t.style.cssText='position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:3000;padding:12px 20px;border-radius:16px;color:#fff;font:600 13px Plus Jakarta Sans,sans-serif;box-shadow:0 12px 40px rgba(0,0,0,.25);max-width:90vw;text-align:center;background:'+(bad?'#b91c1c':'#0d4f3c');document.body.appendChild(t);setTimeout(()=>t.remove(),2600)}
+function sheet(h){let s=$('xsheet');if(!s){s=document.createElement('div');s.id='xsheet';s.onclick=e=>{if(e.target===s)closeSheet()};document.body.appendChild(s)}s.innerHTML='<div class="sh"><div class="auth-sheet-drag mb-4"></div>'+h+'</div>';s.classList.add('open');document.body.style.overflow='hidden'}
+function closeSheet(){const s=$('xsheet');if(s)s.classList.remove('open');document.body.style.overflow=''}
+window.closeSheet=closeSheet;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet()});
+
+/* ── operators registry (usernames) ── */
+const UN={201:'ramada',202:'lakepalace',203:'aquaserene',204:'foursights',205:'venezia',206:'wavesdales',207:'oceanic',208:'backwaterclub',209:'decruze',210:'mytrip',211:'myhouseboats',212:'whisperingwaters',213:'geo',214:'mayooram',215:'pearlspot',216:'atdc'};
+const OPS=PROPERTIES.filter(p=>p.category==='houseboat').map(p=>({id:p.id,name:p.title,user:UN[p.id]||('op'+p.id),loc:p.location,price:p.price,rating:p.rating,reviews:p.reviews}));
+window.ALP_OPERATORS=OPS;
+const K_OPS='alp_ops_v1',K_BK='alp_ops_bookings',K_AD='alp_admin_v1';
+let DB=load(K_OPS,{}),AD_S=Object.assign({commission:10,pass:'Admin123',suspended:{}},load(K_AD,{}));
+const saveDB=()=>save(K_OPS,DB),saveAD=()=>save(K_AD,AD_S);
+function od(id){if(!DB[id]){const o=OPS.find(x=>x.id==id);DB[id]={pass:'agent123',base:o.price,weekend:o.price,over:{},blocked:{},prof:{contact:'',phone:'',email:'',about:''}};saveDB()}return DB[id]}
+OPS.forEach(o=>od(o.id));
+const opById=id=>OPS.find(o=>o.id==id), opByName=n=>OPS.find(o=>o.name===n);
+const priceFor=(id,s)=>{const o=od(id);return o.over[s]!=null?o.over[s]:(isWE(s)?o.weekend:o.base)};
+
+/* ── bookings registry (survives customer logout) ── */
+function eff(b){const st=(b.status==='confirmed'&&b.checkOut&&b.checkOut<iso(today()))?'completed':b.status;return Object.assign({},b,{st})}
+function syncBk(){const reg=load(K_BK,[]);(state.userBookings||[]).forEach(b=>{if(!b.status||!b.reference||!opByName(b.propertyName))return;const i=reg.findIndex(x=>x.id===b.id);if(i<0)reg.push(Object.assign({},b));else if(tsOf(b)>tsOf(reg[i]))reg[i]=Object.assign({},reg[i],b)});save(K_BK,reg);return reg}
+const tsOf=x=>x.updatedAt||x.createdAt||'';
+const allBk=()=>syncBk().map(eff);
+const opBk=id=>{const o=opById(id);return allBk().filter(b=>b.propertyName===o.name).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''))};
+function mutate(id,fn){const reg=syncBk(),r=reg.find(x=>x.id===id),ts=new Date().toISOString();if(r){fn(r);r.updatedAt=ts;save(K_BK,reg)}const u=(state.userBookings||[]).find(x=>x.id===id);if(u){fn(u);u.updatedAt=ts;persistState()}if(window.renderMyBookings)renderMyBookings()}
+const key=b=>b.st==='pending'?(b.quoteStatus==='quoted'?'quoted':b.quoteStatus==='declined'?'qdeclined':'pending'):b.st;
+const LAB={pending:'New enquiry',quoted:'Quote sent',qdeclined:'Quote declined',confirmed:'Confirmed',completed:'Completed',declined:'Declined'};
+const chip=b=>`<span class="xchip s-${key(b)}">${LAB[key(b)]}</span>`;
+const refresh=()=>{if($('view-admin').classList.contains('active'))AD.go(AD.t);else OP.body()};
+
+/* stamp guest identity on new enquiries (invisible to customer UI) */
+const _sar=window.submitAvailabilityRequest;
+window.submitAvailabilityRequest=function(){const n=(state.userBookings||[]).length;_sar.apply(this,arguments);if((state.userBookings||[]).length>n){const b=state.userBookings[0],u=state.loggedInUser||{};b.guestName=state.profileDisplayName||u.username||'Guest';b.guestEmail=u.email||'';b.guestKey=String(u.email||u.username||'').toLowerCase();b.guestPhone=state.profilePhone?'+91'+state.profilePhone.replace(/\D/g,''):'';persistState();syncBk()}};
+
+/* ═══════════ OPERATOR PORTAL ═══════════ */
+const ST={id:null,tab:'overview',filter:'pending',boat:0};
+const bd=()=>{const d=od(ST.id);return ST.boat>0&&d.extra&&d.extra[ST.boat-1]?d.extra[ST.boat-1]:d};
+const bpr=(d,s)=>d.over[s]!=null?d.over[s]:(isWE(s)?d.weekend:d.base);
+const fleetBoats=id=>{const d=od(id);return [{i:0,name:d.bname||'Houseboat 01',d}].concat((d.extra||[]).map((x,k)=>({i:k+1,name:x.name,d:x})))};
+const boatHdr=()=>{const b=fleetBoats(ST.id)[ST.boat]||fleetBoats(ST.id)[0];return `<div class="flex items-center gap-3 mb-4"><button onclick="OP.tab('fleet')" class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-arrow-left text-gray-600 text-xs"></i></button><div class="min-w-0"><p class="adth">Managing boat</p><p class="font-body font-bold text-sm text-ink truncate">${E(opById(ST.id).name)} · ${E(b.name)}</p></div></div>`};
+const kpi=(l,v,s,c)=>`<div class="xcard p-4"><p class="adth">${l}</p><p class="font-body font-bold text-2xl mt-1" style="color:${c||'#1a1a18'}">${v}</p><p class="text-[11px] text-gray-400 font-body">${s}</p></div>`;
+const empty=(i,t,s)=>`<div class="text-center py-12"><div class="w-14 h-14 mx-auto rounded-3xl bg-emerald-mist flex items-center justify-center mb-3"><i class="fa-solid ${i} text-emerald text-xl"></i></div><p class="font-display text-xl text-ink">${t}</p><p class="text-gray-400 text-xs font-body mt-1 max-w-[240px] mx-auto">${s}</p></div>`;
+const OP={
+ render(){const o=opById(ST.id);if(!o)return;const v=$('view-agent');v.style.paddingBottom='120px';
+  v.innerHTML=`<div class="bg-emerald px-5 pt-12 pb-5 relative overflow-hidden"><div class="absolute inset-0 opacity-10"><svg viewBox="0 0 480 140" class="w-full h-full" preserveAspectRatio="xMidYMid slice"><circle cx="380" cy="-20" r="100" fill="none" stroke="white" stroke-width="1.5"/><path d="M0 100 Q240 70 480 100" fill="none" stroke="white"/></svg></div>
+  <div class="relative z-10 flex items-center justify-between gap-3"><div class="min-w-0"><p class="text-white/60 text-[10px] font-body tracking-widest uppercase">Fleet Management</p><h2 class="text-white font-display text-2xl font-light leading-tight truncate">${E(o.name)}</h2><p class="text-gold-light text-xs font-body mt-0.5">@${E(o.user)} · ${E(o.loc)}</p></div>
+  <button onclick="OP.logout()" class="w-10 h-10 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0" title="Back to Admin"><i class="fa-solid fa-arrow-left text-white text-sm"></i></button></div></div><div id="op-body" class="px-4 py-5"></div>`;
+  this.body()},
+ tab(t){ST.tab=t;if(t==='fleet')ST.boat=0;this.body();window.scrollTo(0,0)},
+ bks(){return opBk(ST.id)},
+ body(){const el=$('op-body');if(!el||!ST.id)return;
+  document.querySelectorAll('#op-nav .nav-item').forEach(b=>b.classList.toggle('active-nav',b.dataset.t===(ST.tab==='pricing'?'fleet':ST.tab)));
+  el.innerHTML=({overview:this.ov,enquiries:this.enq,fleet:this.fleet,pricing:this.pricing,profile:this.profile})[ST.tab].call(this)},
+ ov(){const o=opById(ST.id),bk=this.bks(),n=k=>bk.filter(b=>key(b)===k).length,t=iso(today()),d=od(o.id);
+  const rev=bk.filter(b=>['confirmed','completed'].includes(b.st)).reduce((s,b)=>s+amt(b),0);
+  const up=bk.filter(b=>b.st==='confirmed'&&b.checkIn>=t).sort((a,b)=>a.checkIn.localeCompare(b.checkIn));
+  const need=bk.filter(b=>b.st==='pending'&&b.quoteStatus!=='quoted');
+  return `<div class="grid grid-cols-2 gap-3 mb-4">${kpi('New enquiries',need.length,'awaiting your quote','#c9a84c')}${kpi('Confirmed trips',n('confirmed'),up.length+' upcoming','#0d4f3c')}${kpi('Revenue',inr(rev),'confirmed + completed')}${kpi('Rating',o.rating+' ★',o.reviews+' reviews','#8b5cf6')}</div>
+  <div class="xcard p-4 mb-4"><div class="flex items-center justify-between mb-2"><p class="font-body font-semibold text-sm text-ink">Tonight's rates</p><button onclick="OP.tab('fleet')" class="text-emerald text-xs font-semibold font-body">Fleet →</button></div>
+  <div class="grid grid-cols-3 gap-2 text-center"><div class="bg-emerald-mist rounded-xl py-2"><p class="adth">Tonight</p><p class="font-bold text-sm font-body">${inr(priceFor(o.id,t))}</p></div><div class="bg-gray-50 rounded-xl py-2"><p class="adth">Weekday</p><p class="font-bold text-sm font-body">${inr(d.base)}</p></div><div class="bg-gold-pale rounded-xl py-2"><p class="adth">Weekend</p><p class="font-bold text-sm font-body">${inr(d.weekend)}</p></div></div></div>
+  <div class="xcard p-4 mb-4"><div class="flex items-center justify-between mb-3"><p class="font-body font-semibold text-sm text-ink">Needs your response</p><span class="xchip s-pending">${need.length}</span></div>
+  ${need.length?need.slice(0,3).map(b=>this.mini(b)).join(''):'<p class="text-xs text-gray-400 font-body">All enquiries are answered. 🎉</p>'}
+  ${need.length?`<button onclick="ST_F('pending')" class="w-full mt-2 text-emerald text-xs font-semibold font-body py-2 rounded-xl hover:bg-emerald-mist">View all enquiries →</button>`:''}</div>
+  <div class="xcard p-4"><p class="font-body font-semibold text-sm text-ink mb-3">Upcoming guests</p>${up.length?up.slice(0,4).map(b=>this.mini(b)).join(''):'<p class="text-xs text-gray-400 font-body">No confirmed upcoming trips yet.</p>'}</div>`},
+ mini(b){return `<div onclick="OP.open('${b.id}')" class="flex items-center gap-3 py-2 cursor-pointer booking-row rounded-xl px-1"><div class="w-9 h-9 rounded-xl bg-emerald-mist flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-user text-emerald text-xs"></i></div><div class="flex-1 min-w-0"><p class="font-body font-semibold text-xs text-ink truncate">${E(b.guestName||'Guest')} · #${E(b.reference)}</p><p class="text-[11px] text-gray-400 font-body">${formatDate(b.checkIn)} · ${E(b.guestStr||'')}</p></div>${chip(b)}</div>`},
+ enq(){const bk=this.bks(),f=ST.filter,defs=[['pending','New'],['quoted','Quoted'],['qdeclined','Quote declined'],['confirmed','Confirmed'],['completed','Done'],['declined','Declined']];
+  const tabs=`<div class="flex gap-1.5 overflow-x-auto pb-3" style="scrollbar-width:none">${defs.map(([k,l])=>{const c=bk.filter(b=>key(b)===k).length,on=k===f;return `<button onclick="ST_F('${k}')" class="flex-shrink-0 xchip ${on?'':''}" style="padding:7px 13px;${on?'background:#0d4f3c;color:#fff':'background:#fff;color:#64748b;border:1px solid #e5e7eb'}">${l} · ${c}</button>`}).join('')}</div>`;
+  const list=bk.filter(b=>key(b)===f);
+  return tabs+(list.length?list.map(b=>this.card(b)).join(''):empty('fa-inbox','Nothing here','Guest requests for '+E(opById(ST.id).name)+' appear in this list.'))},
+ card(b){const q=amt(b);return `<div class="xcard mb-3 overflow-hidden"><div onclick="OP.open('${b.id}')" class="p-4 cursor-pointer"><div class="flex items-start justify-between gap-2 mb-2"><div class="min-w-0"><p class="font-body font-bold text-sm text-ink truncate">${E(b.guestName||'Guest')}</p><p class="text-[11px] text-gray-400 font-mono">#${E(b.reference)}</p></div>${chip(b)}</div>
+  <div class="grid grid-cols-3 gap-2 text-[11px] font-body"><div><p class="adth">Check-in</p><p class="font-semibold text-ink">${formatDate(b.checkIn)}</p></div><div><p class="adth">Nights</p><p class="font-semibold text-ink">${b.nights||1}</p></div><div><p class="adth">${q?'Quote':'Estimate'}</p><p class="font-semibold text-emerald">${inr(q||b.estimate||0)}</p></div></div>
+  <p class="text-[11px] text-gray-500 font-body mt-2"><i class="fa-solid fa-route text-emerald mr-1"></i>${E(b.route)} · ${E(b.guestStr||'')}</p></div>
+  <div class="px-4 pb-4 flex gap-2">${b.st==='pending'?`<button onclick="OP.open('${b.id}')" class="xbtn xbtn-em flex-1">Review &amp; respond</button>`:b.st==='confirmed'?`<button onclick="OP.open('${b.id}')" class="xbtn xbtn-out flex-1">Details</button><button onclick="OP.setStatus('${b.id}','completed')" class="xbtn xbtn-em flex-1">Mark completed</button>`:`<button onclick="OP.open('${b.id}')" class="xbtn xbtn-out flex-1">View details</button>`}</div></div>`},
+ open(id){const b=allBk().find(x=>x.id===id);if(!b)return;const o=opByName(b.propertyName);if(!o)return;const d=od(o.id);
+  const dts=Array.from({length:b.nights||1},(_,i)=>addDaysISO(b.checkIn,i)),sum=dts.reduce((s,x)=>s+priceFor(o.id,x),0),fee=Math.round(sum*.05),bl=dts.filter(x=>d.blocked[x]);
+  const row=(l,v)=>`<div class="flex justify-between gap-3 py-1.5 text-xs font-body border-b border-gray-100 last:border-0"><span class="text-gray-400">${l}</span><span class="font-semibold text-ink text-right">${v}</span></div>`;
+  const ph=b.guestPhone?E(b.guestPhone):'';
+  let act='';
+  if(b.st==='pending'){const pre=amt(b)||Math.round(sum*1.05);act=`<label class="xlbl mt-4">Total quote (₹, all-inclusive)</label><input id="x-quote" type="number" min="1" class="xin" value="${pre}"/>
+   ${bl.length?`<p class="text-[11px] text-red-500 font-body mt-1"><i class="fa-solid fa-triangle-exclamation"></i> ${bl.length} night(s) are blocked in your calendar.</p>`:''}
+   <div class="grid grid-cols-2 gap-2 mt-3"><button onclick="OP.quote('${b.id}',false)" class="xbtn xbtn-em">${b.quoteStatus==='quoted'||b.quoteStatus==='declined'?'Send revised quote':'Accept &amp; send quote'}</button><button onclick="OP.quote('${b.id}',true)" class="xbtn xbtn-gold">Confirm now</button></div>
+   <button onclick="OP.decline('${b.id}')" class="xbtn xbtn-red w-full mt-2">Decline request</button>`}
+  else if(b.st==='confirmed')act=`<div class="grid grid-cols-2 gap-2 mt-4"><button onclick="OP.setStatus('${b.id}','completed')" class="xbtn xbtn-em">Mark completed</button><button onclick="OP.decline('${b.id}')" class="xbtn xbtn-red">Cancel booking</button></div>`;
+  else if(b.st==='declined')act=`<button onclick="OP.setStatus('${b.id}','pending')" class="xbtn xbtn-out w-full mt-4">Reopen as new enquiry</button>`;
+  sheet(`<div class="flex items-start justify-between mb-3"><div><h3 class="font-display text-2xl text-ink leading-tight">Booking <em>#${E(b.reference)}</em></h3><div class="mt-1">${chip(b)}</div></div><button onclick="closeSheet()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-gray-500 text-sm"></i></button></div>
+  <div class="xcard p-4 mb-3" style="background:#e8f2ee"><p class="adth mb-1">Operator / Agent</p><p class="font-body font-bold text-sm text-ink">${E(o.name)}</p><p class="text-xs font-body text-emerald font-semibold">Username: @${E(o.user)}</p><p class="text-[11px] text-gray-500 font-body">${E(o.loc)}</p></div>
+  <div class="xcard p-4 mb-3"><p class="adth mb-1">Guest</p>${row('Name',E(b.guestName||'Guest'))}${b.guestEmail?row('Email',E(b.guestEmail)):''}${ph?row('Phone',ph):''}${row('Party',E(b.guestStr||b.guestsLabel||''))}
+  ${ph?`<div class="flex gap-2 mt-2"><a href="tel:${ph}" class="xbtn xbtn-out flex-1 text-center"><i class="fa-solid fa-phone mr-1"></i>Call</a><a target="_blank" href="https://wa.me/${ph.replace(/\D/g,'')}" class="xbtn xbtn-em flex-1 text-center"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp</a></div>`:''}</div>
+  <div class="xcard p-4 mb-3"><p class="adth mb-1">Trip</p>${row('Check-in',formatDate(b.checkIn))}${row('Check-out',formatDate(b.checkOut))}${row('Nights',b.nights||1)}${row('Route',E(b.route))}${row('Boarding',E(b.boarding))}${row('Requested',b.createdAt?formatDate(b.createdAt.slice(0,10)):'—')}</div>
+  <div class="xcard p-4"><p class="adth mb-1">Your rates for these nights</p><div style="max-height:120px;overflow-y:auto">${dts.map(x=>row(formatDate(x)+(isWE(x)?' · weekend':'')+(d.blocked[x]?' · blocked':''),inr(priceFor(o.id,x)))).join('')}</div>${row('Subtotal',inr(sum))}${row('Service fee (5%)',inr(fee))}${row('Suggested total','<b>'+inr(sum+fee)+'</b>')}${amt(b)?row('Quoted to guest','<b class="text-emerald">'+inr(amt(b))+'</b>'):''}</div>${act}`)},
+ quote(id,now){const v=Math.round(Number($('x-quote').value));if(!v||v<1)return toast('Enter a valid quote amount',true);
+  const b=allBk().find(x=>x.id===id),o=opByName(b.propertyName),bl=Array.from({length:b.nights||1},(_,i)=>addDaysISO(b.checkIn,i)).filter(x=>od(o.id).blocked[x]);
+  if(bl.length&&!confirm('Some nights are blocked in your calendar. Continue?'))return;
+  mutate(id,r=>{r.price=inr(v);r.quoteStatus=now?'accepted':'quoted';r.status=now?'confirmed':'pending'});closeSheet();ST.filter=now?'confirmed':'quoted';toast(now?'Booking confirmed':'Quote sent to guest');refresh()},
+ decline(id){if(!confirm('Decline this booking?'))return;mutate(id,r=>{r.status='declined'});closeSheet();ST.filter='declined';toast('Booking declined');refresh()},
+ setStatus(id,s){mutate(id,r=>{r.status=s;if(s==='pending')r.quoteStatus='awaiting'});closeSheet();toast('Status updated');refresh()},
+ /* pricing */
+ pricing(){const o=opById(ST.id),d=bd(),w=winDays(),last=w[89];let html='',cur='',i=0;
+  w.forEach(s=>{const dt=parse(s),m=dt.getFullYear()*12+dt.getMonth();if(m!==cur){if(cur!=='')html+='</div>';cur=m;html+=`<p class="font-body font-semibold text-sm text-ink mt-4 mb-2">${dt.toLocaleDateString('en-IN',{month:'long',year:'numeric'})}</p><div class="grid grid-cols-7 gap-1 mb-1">${'SMTWTFS'.split('').map(x=>`<p class="adth text-center">${x}</p>`).join('')}</div><div class="grid grid-cols-7 gap-1">`+'<div class="cal off"></div>'.repeat(dt.getDay())}
+   const p=bpr(d,s),bl=d.blocked[s],ov=d.over[s]!=null;
+   html+=`<button onclick="OP.day('${s}')" class="cal ${isWE(s)?'we':''} ${ov?'ov':''} ${bl?'bl':''}"><b>${dt.getDate()}</b><i>${bl?'blocked':short(p)}</i></button>`});
+  html+='</div>';
+  return boatHdr()+`<div class="xcard p-4 mb-4"><p class="font-body font-semibold text-sm text-ink mb-1">Default nightly rates</p><p class="text-[11px] text-gray-400 font-body mb-3">Weekend = Friday &amp; Saturday nights.</p><div class="grid grid-cols-2 gap-3"><div><label class="xlbl">Weekday ₹</label><input id="x-base" type="number" class="xin" value="${d.base}"/></div><div><label class="xlbl">Weekend ₹</label><input id="x-we" type="number" class="xin" value="${d.weekend}"/></div></div><button onclick="OP.saveRates()" class="xbtn xbtn-em w-full mt-3">Save rates</button></div>
+  <div class="xcard p-4 mb-4"><p class="font-body font-semibold text-sm text-ink mb-3">Set price for a date range</p><div class="grid grid-cols-2 gap-3"><div><label class="xlbl">From</label><input id="x-from" type="date" class="xin" min="${w[0]}" max="${last}"/></div><div><label class="xlbl">To</label><input id="x-to" type="date" class="xin" min="${w[0]}" max="${last}"/></div></div><label class="xlbl mt-3">Price per night ₹</label><input id="x-rp" type="number" class="xin" placeholder="e.g. 18000"/><div class="grid grid-cols-2 gap-2 mt-3"><button onclick="OP.range(false)" class="xbtn xbtn-em">Apply price</button><button onclick="OP.range(true)" class="xbtn xbtn-out">Block dates</button></div></div>
+  <div class="xcard p-4"><div class="flex items-center justify-between"><div><p class="font-body font-semibold text-sm text-ink">90-day calendar</p><p class="text-[11px] text-gray-400 font-body">Editable until ${formatDate(last)} · tap a date</p></div><button onclick="OP.clearOver()" class="xbtn xbtn-red" style="padding:.45rem .7rem">Reset</button></div>
+  <div class="flex gap-3 text-[10px] font-body text-gray-500 mt-2"><span><span class="inline-block w-2.5 h-2.5 rounded bg-gold-pale border" style="border-color:#efdca4"></span> Weekend</span><span><span class="inline-block w-2.5 h-2.5 rounded border-2 border-emerald"></span> Custom</span><span><span class="inline-block w-2.5 h-2.5 rounded bg-gray-200"></span> Blocked</span></div>${html}</div>`},
+ saveRates(){const b=Math.round(Number($('x-base').value)),w=Math.round(Number($('x-we').value));if(!(b>0&&w>0))return toast('Enter valid rates',true);const d=bd();d.base=b;d.weekend=w;saveDB();toast('Rates saved');this.body()},
+ day(s){const o=opById(ST.id),d=bd();sheet(`<div class="flex items-center justify-between mb-4"><h3 class="font-display text-2xl text-ink">${parse(s).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'})}</h3><button onclick="closeSheet()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-gray-500 text-sm"></i></button></div>
+  <p class="text-[11px] text-gray-400 font-body mb-3">${isWE(s)?'Weekend night':'Weekday night'} · default ${inr(isWE(s)?d.weekend:d.base)}</p><label class="xlbl">Price for this night ₹</label><input id="x-dp" type="number" class="xin" value="${bpr(d,s)}"/>
+  <label class="flex items-center gap-2 mt-3 text-sm font-body text-ink"><input id="x-db" type="checkbox" ${d.blocked[s]?'checked':''} style="width:18px;height:18px;accent-color:#0d4f3c"/> Block this date (not available)</label>
+  <div class="grid grid-cols-2 gap-2 mt-4"><button onclick="OP.saveDay('${s}')" class="xbtn xbtn-em">Save</button><button onclick="OP.resetDay('${s}')" class="xbtn xbtn-out">Reset to default</button></div>`)},
+ saveDay(s){if(!inWin(s))return toast('Only the next 90 days can be edited',true);const p=Math.round(Number($('x-dp').value));if(!(p>0))return toast('Enter a valid price',true);const d=bd(),def=isWE(s)?d.weekend:d.base;if(p===def)delete d.over[s];else d.over[s]=p;if($('x-db').checked)d.blocked[s]=true;else delete d.blocked[s];saveDB();closeSheet();toast('Date updated');this.body()},
+ resetDay(s){const d=bd();delete d.over[s];delete d.blocked[s];saveDB();closeSheet();toast('Reset to default');this.body()},
+ range(block){const f=$('x-from').value,t=$('x-to').value,p=Math.round(Number($('x-rp').value));if(!f||!t||f>t)return toast('Choose a valid date range',true);if(!inWin(f)||!inWin(t))return toast('Dates must be within the next 90 days',true);if(!block&&!(p>0))return toast('Enter a price',true);
+  const d=bd();let s=f,n=0;while(s<=t){if(block)d.blocked[s]=true;else{d.over[s]=p;delete d.blocked[s]}s=addDaysISO(s,1);n++}saveDB();toast(n+' date(s) '+(block?'blocked':'updated'));this.body()},
+ clearOver(){if(!confirm('Remove all custom prices and blocked dates?'))return;const d=bd();d.over={};d.blocked={};saveDB();toast('Calendar reset');this.body()},
+ /* profile */
+ profile(){const o=opById(ST.id),d=od(o.id),p=d.prof;return `<div class="xcard p-5 text-center mb-4"><div class="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center font-display text-3xl text-gold" style="background:#082e23">${E(o.name[0])}</div><h3 class="font-display text-xl text-ink mt-3 leading-tight">${E(o.name)}</h3><p class="text-emerald text-xs font-semibold font-body">@${E(o.user)}</p><p class="text-gray-400 text-[11px] font-body">${E(o.loc)}</p></div>
+  <div class="xcard p-4 mb-4 space-y-3"><p class="font-body font-semibold text-sm text-ink">Business profile</p><div><label class="xlbl">Contact person</label><input id="p-c" class="xin" value="${E(p.contact)}" placeholder="Full name"/></div><div><label class="xlbl">Phone</label><input id="p-p" type="tel" class="xin" value="${E(p.phone)}" placeholder="+91 …"/></div><div><label class="xlbl">Email</label><input id="p-e" type="email" class="xin" value="${E(p.email)}" placeholder="you@business.com"/></div><div><label class="xlbl">About the boat</label><textarea id="p-a" rows="3" class="xin" placeholder="Short description">${E(p.about)}</textarea></div><button onclick="OP.saveProfile()" class="xbtn xbtn-em w-full">Save profile</button></div>
+  
+  <button onclick="OP.logout()" class="w-full py-3.5 rounded-2xl border-2 border-red-200 text-red-500 font-semibold text-sm font-body"><i class="fa-solid fa-arrow-left mr-2"></i>Back to Admin</button>`},
+ saveProfile(){const d=od(ST.id);d.prof={contact:$('p-c').value.trim(),phone:$('p-p').value.trim(),email:$('p-e').value.trim(),about:$('p-a').value.trim()};saveDB();toast('Profile saved')},
+ savePw(){const d=od(ST.id),o=$('pw-o').value,n=$('pw-n').value;if(o!==d.pass)return toast('Current password is wrong',true);if(n.length<6)return toast('New password must be 6+ characters',true);d.pass=n;saveDB();$('pw-o').value=$('pw-n').value='';toast('Password updated')},
+ logout(){ST.id=null;showView('admin');AD.go('operators')}
+};
+window.ST_F=f=>{ST.filter=f;ST.tab='enquiries';OP.body()};
+Object.assign(OP,{
+ fleet(){const o=opById(ST.id),d=od(o.id),L=fleetBoats(o.id);
+  return `<div class="mb-3"><p class="font-display text-2xl text-ink leading-tight">Fleet</p><p class="text-[11px] text-gray-400 font-body">${L.length} boat${L.length>1?'s':''} · each boat has its own rates and calendar</p></div>`+
+  L.map(b=>`<div class="xcard p-4 mb-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="font-body font-bold text-sm text-ink truncate">${E(b.name)}</p><p class="text-[11px] text-gray-400 font-body">${Object.keys(b.d.over).length} custom dates · ${Object.keys(b.d.blocked).length} blocked</p></div>${b.i?`<button onclick="OP.rmBoat(${b.i})" class="xchip s-declined">Remove</button>`:''}</div><div class="grid grid-cols-2 gap-2 mt-3 text-center"><div class="bg-gray-50 rounded-xl py-2"><p class="adth">Weekday</p><p class="font-bold text-sm font-body">${inr(b.d.base)}</p></div><div class="bg-gold-pale rounded-xl py-2"><p class="adth">Weekend</p><p class="font-bold text-sm font-body">${inr(b.d.weekend)}</p></div></div><button onclick="OP.manageBoat(${b.i})" class="xbtn xbtn-em w-full mt-3">Manage pricing &amp; dates</button></div>`).join('')+
+  `<div class="xcard p-4"><p class="font-body font-semibold text-sm text-ink mb-3">Add a boat</p><label class="xlbl">Boat name</label><input id="fb-n" class="xin mb-3" placeholder="Houseboat 0${L.length+1}"/><div class="grid grid-cols-2 gap-3"><div><label class="xlbl">Weekday ₹</label><input id="fb-b" type="number" class="xin" value="${d.base}"/></div><div><label class="xlbl">Weekend ₹</label><input id="fb-w" type="number" class="xin" value="${d.weekend}"/></div></div><button onclick="OP.addBoat()" class="xbtn xbtn-gold w-full mt-3">Add boat</button></div>`},
+ manageBoat(i){ST.boat=i;ST.tab='pricing';this.body();window.scrollTo(0,0)},
+ addBoat(){const d=od(ST.id),n=fleetBoats(ST.id).length,nm=($('fb-n').value||'').trim()||('Houseboat 0'+(n+1)),b=Math.round(Number($('fb-b').value)),w=Math.round(Number($('fb-w').value));if(!(b>0&&w>0))return toast('Enter valid rates',true);(d.extra=d.extra||[]).push({name:nm,base:b,weekend:w,over:{},blocked:{}});saveDB();toast('Boat added');this.body()},
+ rmBoat(i){if(!confirm('Remove this boat and its pricing?'))return;od(ST.id).extra.splice(i-1,1);ST.boat=0;saveDB();toast('Boat removed');this.body()}
+});
+window.OP=OP;
+
+/* ═══════════ ADMIN CONSOLE ═══════════ */
+const AD={t:'overview',q:'',bq:'',bf:'all',
+ go(t,keep){this.t=t;const v=$('view-admin');if(!$('ad-body')){v.style.paddingBottom='40px';v.innerHTML=`<div style="background:linear-gradient(135deg,#040f0a,#082e23 70%,#0d4f3c)" class="px-5 pt-12 pb-5"><div class="flex items-center justify-between"><div><img src="${_nkLogo?_nkLogo.data:'https://res.cloudinary.com/dxmuistk4/image/upload/v1790970942/Black_NAUKA_Houseboat_Logo_cquma1.png'}" alt="Nauka" class="nk-logo nk-logo-white${_nkLogo?' nk-ready':''}" style="height:32px;" /><p class="text-white/50 text-[10px] font-body tracking-widest uppercase mt-2">Control Centre</p><h2 class="text-white font-display text-2xl font-light mt-0.5">Administration</h2></div><button onclick="adminLogOut()" class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center" title="Sign out"><i class="fa-solid fa-right-from-bracket text-white/80 text-sm"></i></button></div></div>
+   <div class="flex gap-2 overflow-x-auto px-4 py-3 sticky z-50" style="top:0;background:#f3f5f4;scrollbar-width:none">${[['overview','Overview'],['operators','Properties / Fleets'],['bookings','Bookings'],['revenue','Revenue'],['settings','Settings']].map(([k,l])=>`<button id="adt-${k}" onclick="AD.go('${k}')" class="adtab">${l}</button>`).join('')}</div><div id="ad-body" class="px-4 pb-6"></div>`}
+  ['overview','applications','operators','bookings','revenue','settings'].forEach(k=>{const b=$('adt-'+k);if(b)b.classList.toggle('on',k===t)});
+  $('ad-body').innerHTML=this[t]();if(!keep)window.scrollTo(0,0)},
+ stats(){const bk=allBk(),rev=o=>bk.filter(b=>b.propertyName===o.name&&['confirmed','completed'].includes(b.st)).reduce((s,b)=>s+amt(b),0);return{bk,gross:bk.filter(b=>['confirmed','completed'].includes(b.st)).reduce((s,b)=>s+amt(b),0),rev}},
+ overview(){const{bk,gross,rev}=this.stats(),cm=Math.round(gross*AD_S.commission/100),n=k=>bk.filter(b=>key(b)===k).length,susp=OPS.filter(o=>AD_S.suspended[o.id]).length;
+  const fun=['pending','quoted','qdeclined','confirmed','completed','declined'],mx=Math.max(1,...fun.map(n)),col={qdeclined:'#f97316',pending:'#f59e0b',quoted:'#0ea5e9',confirmed:'#0d4f3c',completed:'#6b7280',declined:'#ef4444'};
+  const top=OPS.map(o=>({o,r:rev(o)})).sort((a,b)=>b.r-a.r).slice(0,5),tm=Math.max(1,top[0].r);
+  return `<div class="grid grid-cols-2 gap-3 mb-4">${kpi('Operators',OPS.length-susp+' / '+OPS.length,'active / total','#0d4f3c')}${kpi('Enquiries',bk.length,n('pending')+' awaiting quote','#c9a84c')}${kpi('Gross bookings',inr(gross),'confirmed + completed')}${kpi('Commission',inr(cm),AD_S.commission+'% platform fee','#8b5cf6')}</div>
+  <div class="xcard p-4 mb-4"><p class="font-body font-semibold text-sm text-ink mb-3">Booking pipeline</p>${fun.map(k=>`<div class="flex items-center gap-3 mb-2"><p class="text-[11px] font-body text-gray-500 w-20">${LAB[k]}</p><div class="flex-1 h-2 rounded-full bg-gray-100"><div class="h-2 rounded-full" style="width:${n(k)/mx*100}%;background:${col[k]}"></div></div><p class="text-xs font-bold font-body w-6 text-right">${n(k)}</p></div>`).join('')}</div>
+  <div class="xcard p-4 mb-4"><p class="font-body font-semibold text-sm text-ink mb-3">Top operators by revenue</p>${top.map(t=>`<div class="mb-3"><div class="flex justify-between text-xs font-body mb-1"><span class="font-semibold text-ink truncate pr-2">${E(t.o.name)}</span><span class="text-gray-500">${inr(t.r)}</span></div><div class="h-1.5 rounded-full bg-gray-100"><div class="h-1.5 rounded-full bg-gold" style="width:${t.r/tm*100}%"></div></div></div>`).join('')}</div>
+  <div class="xcard p-4"><p class="font-body font-semibold text-sm text-ink mb-2">Latest activity</p>${bk.length?bk.sort((a,b)=>(b.updatedAt||b.createdAt||'').localeCompare(a.updatedAt||a.createdAt||'')).slice(0,5).map(b=>this.brow(b)).join(''):'<p class="text-xs text-gray-400 font-body">No bookings have been requested yet.</p>'}</div>`},
+ brow(b){const o=opByName(b.propertyName);return `<div onclick="AD.bk('${b.id}')" class="xrow flex items-center gap-3 cursor-pointer"><div class="flex-1 min-w-0"><p class="text-xs font-semibold font-body text-ink truncate">${E(b.guestName||'Guest')} · <span class="font-mono text-gray-400">#${E(b.reference)}</span></p><p class="text-[11px] text-gray-400 font-body truncate">${E(b.propertyName)} · @${E(o?o.user:'')} · ${formatDate(b.checkIn)}</p></div><div class="text-right"><p class="text-xs font-bold font-body">${amt(b)?inr(amt(b)):'—'}</p>${chip(b)}</div></div>`},
+ bk(id){OP.open(id)},
+ operators(){return `<input class="xin mb-3" placeholder="Search name, username, location…" value="${E(this.q)}" oninput="AD.q=this.value;AD.list()"/><div id="ad-list">${this.listHTML()}</div>`},
+ list(){$('ad-list').innerHTML=this.listHTML()},
+ listHTML(){const q=this.q.toLowerCase(),{bk}=this.stats();const l=OPS.filter(o=>(o.name+o.user+o.loc).toLowerCase().includes(q));
+  return l.length?l.map(o=>{const s=AD_S.suspended[o.id],n=bk.filter(b=>b.propertyName===o.name);return `<div class="xcard p-4 mb-3"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="font-body font-bold text-sm text-ink truncate">${E(o.name)}</p><p class="text-xs text-emerald font-semibold font-body">@${E(o.user)}</p><p class="text-[11px] text-gray-400 font-body">${E(o.loc)} · ${n.length} bookings</p></div><span class="xchip s-${s?'suspended':'active'}">${s?'Suspended':'Active'}</span></div>
+  <div class="flex gap-2 mt-3"><button onclick="AD.openFleet(${o.id})" class="xbtn xbtn-em flex-1">Open fleet</button><button onclick="AD.toggle(${o.id})" class="xbtn ${s?'xbtn-em':'xbtn-red'} flex-1">${s?'Activate':'Suspend'}</button></div></div>`}).join(''):empty('fa-magnifying-glass','No operators found','Try a different search.')},
+ toggle(id){AD_S.suspended[id]=!AD_S.suspended[id];saveAD();toast(AD_S.suspended[id]?'Operator suspended':'Operator activated');this.go('operators',true)},
+ op(id){const o=opById(id),d=od(id),n=opBk(id);sheet(`<div class="flex items-start justify-between mb-3"><div><h3 class="font-display text-2xl text-ink leading-tight">${E(o.name)}</h3><p class="text-emerald text-xs font-semibold font-body">@${E(o.user)}</p></div><button onclick="closeSheet()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-gray-500 text-sm"></i></button></div>
+  <div class="grid grid-cols-3 gap-2 mb-3">${[['Weekday',inr(d.base)],['Weekend',inr(d.weekend)],['Bookings',n.length]].map(([l,v])=>`<div class="xcard p-3 text-center"><p class="adth">${l}</p><p class="font-bold text-sm font-body">${v}</p></div>`).join('')}</div>
+  <div class="xcard p-4 mb-3 text-xs font-body space-y-1"><p><span class="text-gray-400">Custom-priced dates:</span> <b>${Object.keys(d.over).length}</b> · <span class="text-gray-400">Blocked:</span> <b>${Object.keys(d.blocked).length}</b></p><p><span class="text-gray-400">Contact:</span> <b>${E(d.prof.contact||'—')}</b> · ${E(d.prof.phone||'—')}</p><p><span class="text-gray-400">Email:</span> <b>${E(d.prof.email||'—')}</b></p></div>
+  <label class="xlbl">Set new password</label><input id="x-npw" class="xin" placeholder="Min 6 characters"/><div class="grid grid-cols-2 gap-2 mt-3"><button onclick="AD.setPw(${id})" class="xbtn xbtn-em">Save password</button><button onclick="AD.resetPw(${id})" class="xbtn xbtn-out">Reset to default</button></div>`)},
+ setPw(id){const v=$('x-npw').value;if(v.length<6)return toast('Password must be 6+ characters',true);od(id).pass=v;saveDB();closeSheet();toast('Password updated')},
+ resetPw(id){od(id).pass='agent123';saveDB();closeSheet();toast('Password reset to default')},
+ bookings(){return `<input class="xin mb-2" placeholder="Search reference, guest, operator…" value="${E(this.bq)}" oninput="AD.bq=this.value;AD.blist()"/><select class="xin mb-3" onchange="AD.bf=this.value;AD.blist()">${[['all','All statuses'],...Object.entries(LAB)].map(([k,l])=>`<option value="${k}" ${this.bf===k?'selected':''}>${l}</option>`).join('')}</select><div id="ad-blist">${this.blistHTML()}</div>`},
+ blist(){$('ad-blist').innerHTML=this.blistHTML()},
+ blistHTML(){const q=this.bq.toLowerCase(),l=allBk().filter(b=>(this.bf==='all'||key(b)===this.bf)&&((b.reference||'')+(b.guestName||'')+b.propertyName).toLowerCase().includes(q)).sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));return l.length?l.map(b=>this.brow(b)).join(''):'<p class="text-xs text-gray-400 font-body py-6 text-center">No bookings match.</p>'},
+ revenue(){const{bk,gross,rev}=this.stats(),c=AD_S.commission,cm=Math.round(gross*c/100);return `<div class="xcard p-5 mb-4" style="background:#082e23"><p class="adth" style="color:#e8c97a">Gross bookings value</p><p class="font-display text-4xl text-white mt-1">${inr(gross)}</p><div class="flex gap-6 mt-3"><div><p class="adth" style="color:#94a3b8">Commission (${c}%)</p><p class="font-bold text-gold-light font-body">${inr(cm)}</p></div></div></div>
+  ${''}<button onclick="AD.csv()" class="xbtn xbtn-gold w-full"><i class="fa-solid fa-file-csv mr-1.5"></i>Export bookings CSV</button>`},
+ csv(){const rows=[['Reference','Guest','Operator','Username','Check-in','Check-out','Nights','Status','Amount']].concat(allBk().map(b=>{const o=opByName(b.propertyName);return[b.reference,b.guestName||'',b.propertyName,o?o.user:'',b.checkIn,b.checkOut,b.nights||1,LAB[key(b)],amt(b)]}));
+  const blob=new Blob([rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nauka-bookings.csv';a.click();toast('CSV exported')},
+ settings(){return `<div class="xcard p-4 mb-4"><p class="font-body font-semibold text-sm text-ink mb-3">Platform commission</p><label class="xlbl">Commission %</label><input id="s-c" type="number" min="0" max="50" class="xin" value="${AD_S.commission}"/><button onclick="AD.saveComm()" class="xbtn xbtn-em w-full mt-3">Save commission</button></div>
+  <div class="xcard p-4 mb-4"><p class="font-body font-semibold text-sm text-ink mb-3">Admin password</p><label class="xlbl">Current</label><input id="s-o" type="password" class="xin"/><label class="xlbl mt-3">New (min 6)</label><input id="s-n" type="password" class="xin"/><button onclick="AD.savePw()" class="xbtn xbtn-gold w-full mt-3">Update password</button></div>
+  <button onclick="adminLogOut()" class="xbtn xbtn-out w-full"><i class="fa-solid fa-right-from-bracket mr-1.5"></i>Sign out of admin</button>`},
+ saveComm(){const v=Number($('s-c').value);if(!(v>=0&&v<=50))return toast('Enter 0–50',true);AD_S.commission=v;saveAD();toast('Commission saved')},
+ savePw(){if($('s-o').value!==AD_S.pass)return toast('Current password is wrong',true);const n=$('s-n').value;if(n.length<6)return toast('Use 6+ characters',true);AD_S.pass=n;saveAD();toast('Admin password updated');this.go('settings',true)},
+ resetAll(){if(!confirm('Reset every operator password to the default?'))return;OPS.forEach(o=>od(o.id).pass='agent123');saveDB();toast('All passwords reset')}
+};
+window.AD=AD;
+AD.openFleet=function(id){ST.boat=0;ST.id=id;ST.tab='overview';ST.filter='pending';ST.admin=true;showView('agent')};
+window.switchAdminTab=t=>AD.go(['overview','applications','operators','bookings','revenue','settings'].includes(t)?t:'overview');
+window.adminLogOut=function(){$('view-admin').innerHTML='';showView('login');setTimeout(()=>switchLoginTab('agent'),50)};
+
+/* ═══════════ LOGIN + NAVIGATION HOOKS ═══════════ */
+window.loginAsAgent=function(){const u=($('agent-login-email').value||'').trim(),pw=$('agent-login-pass').value.trim();
+  if(u.toLowerCase()==='admin'&&(pw===AD_S.pass||(AD_S.pass==='Admin123'&&pw.toLowerCase()==='admin123'))){_saveSession('admin',{name:'Super Admin'});AD.t='overview';ST.admin=true;showView('admin');return}
+  toast('Invalid admin username or password',true)};
+const _sv=window.showView;
+window.showView=function(v,p){if(v==='agent'&&!ST.id)v='login';_sv(v,p);
+  const an=$('agent-bottom-nav');if(an)an.classList.add('hidden');
+  const nav=$('op-nav');if(nav)nav.style.display=v==='agent'?'flex':'none';
+  if(v==='agent')OP.render();if(v==='admin')AD.go('overview')};
+window.exitAgentDashboard=()=>OP.logout();
+document.addEventListener('DOMContentLoaded',()=>{
+  const e=$('agent-login-email');if(e){e.type='text';e.placeholder='Admin username';e.autocapitalize='none';e.autocomplete='username'}
+  const l=document.querySelector('#form-agent label');if(l)l.textContent='Admin Username';
+    syncBk();
+});
+
+/* ═══════════ CUSTOMER LOGIN GUARD + HOST PROFILE CARD ═══════════ */
+const _lc=window.loginAsCustomer;
+window.loginAsCustomer=function(){const inp=document.querySelector('#form-customer input[type="email"]'),v=(inp?inp.value:'').trim().toLowerCase();
+  if(v.startsWith('admin')){toast('This account name is reserved. Please use a different email.',true);return}
+  _lc.apply(this,arguments)};
+function hostCard(){const pr=state.selectedProperty,o=pr&&opByName(pr.title);if(!o)return;
+  const d=od(o.id),i=OPS.indexOf(o),av=PROFILE_AVATARS[i%PROFILE_AVATARS.length],bn=PROFILE_BANNERS[(i*5+2)%PROFILE_BANNERS.length];
+  const done=allBk().filter(b=>b.propertyName===o.name&&b.st==='completed').length,trips=o.reviews+done;
+  const about=d.prof.about||pr.description,st=(l,v)=>`<div class="rounded-2xl py-3 text-center" style="background:#fff;border:1px solid #eef0ef"><p class="font-body font-bold text-lg text-ink">${v}</p><p class="text-[10px] text-gray-400 font-body uppercase tracking-wider">${l}</p></div>`;
+  const row=(l,v)=>`<div class="flex justify-between gap-3 py-2 text-xs font-body border-b border-gray-100 last:border-0"><span class="text-gray-400">${l}</span><span class="font-semibold text-ink text-right">${v}</span></div>`;
+  sheet(`<div class="relative" style="margin:-.25rem 0 0"><div style="height:96px;border-radius:1.25rem;background:${bn.css};position:relative;overflow:hidden"><div style="position:absolute;top:-18px;right:-18px;width:80px;height:80px;border-radius:50%;background:${bn.dot1};opacity:.55"></div><div style="position:absolute;bottom:-14px;left:40%;width:60px;height:60px;border-radius:50%;background:${bn.dot2};opacity:.5"></div></div>
+  <button onclick="closeSheet()" class="absolute w-8 h-8 rounded-full flex items-center justify-center" style="top:10px;right:10px;background:rgba(255,255,255,.7)"><i class="fa-solid fa-xmark text-gray-600 text-xs"></i></button>
+  <div class="flex items-end gap-3" style="margin:-40px 0 0 14px;position:relative"><div style="width:84px;height:84px;border-radius:50%;border:4px solid #fff;overflow:hidden;background:${av.bg};box-shadow:0 8px 24px rgba(0,0,0,.14);flex-shrink:0">${av.svg}</div>
+  <div class="pb-2 flex gap-1.5 flex-wrap"><span class="xchip" style="background:#fdf8ec;color:#a07a1a">★ ${o.rating}</span><span class="xchip s-confirmed">✓ Verified operator</span></div></div></div>
+  <div class="mt-3 px-1"><h3 class="font-body font-bold text-xl text-ink leading-tight">${E(o.name)}</h3><p class="text-gray-500 text-sm font-body leading-relaxed mt-1">${E(about)}</p></div>
+  <div class="grid grid-cols-3 gap-2 mt-4">${st('Trips completed',trips)}${st('Rating',o.rating+' ★')}${st('Reviews',o.reviews)}</div>
+  <div class="xcard p-4 mt-4"><p class="adth mb-1">Operator details</p>${row('Operator ID','<span class="text-emerald">@'+E(o.user)+'</span>')}${row('Location',E(o.loc))}${d.prof.contact?row('Contact person',E(d.prof.contact)):''}${d.prof.phone?row('Phone',E(d.prof.phone)):''}${d.prof.email?row('Email',E(d.prof.email)):''}${row('Boat type',E(pr.subtitle||'Houseboat'))}</div>`)}
+window.showHostProfile=hostCard;
+document.addEventListener('DOMContentLoaded',()=>{const h=$('detail-host'),r=h&&h.closest('.border-y');if(!r)return;r.style.cursor='pointer';r.addEventListener('click',hostCard);r.insertAdjacentHTML('beforeend','<i class="fa-solid fa-chevron-right text-gray-300 text-xs"></i>')});
+
+/* ═══════════ QUOTE SYNC (operator → customer, both directions) ═══════════ */
+function myKey(){const u=state.loggedInUser;return u?String(u.email||u.username||'').toLowerCase():''}
+function quoteDot(){const n=(state.userBookings||[]).filter(b=>b.status==='pending'&&b.quoteStatus==='quoted').length,nav=$('nav-bookings');if(!nav)return;let d=nav.querySelector('.qdot');
+  if(n&&!d){nav.style.position='relative';nav.insertAdjacentHTML('beforeend','<span class="qdot" style="position:absolute;top:2px;right:4px;min-width:16px;height:16px;border-radius:9px;background:#ef4444;color:#fff;font:700 9px sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #fff"></span>');d=nav.querySelector('.qdot')}
+  if(d){if(n)d.textContent=n;else d.remove()}}
+function pull(silent){if(!state.loggedInUser)return;const k=myKey();let ch=false,nq=false;
+  load(K_BK,[]).forEach(r=>{if(r.guestKey!==k)return;const u=state.userBookings.find(x=>x.id===r.id);
+    if(!u){state.userBookings.push(Object.assign({},r));ch=true;if(r.quoteStatus==='quoted'&&r.status==='pending')nq=true;return}
+    if(tsOf(r)>tsOf(u)){if(r.quoteStatus==='quoted'&&u.quoteStatus!=='quoted')nq=true;Object.assign(u,r);ch=true}});
+  if(ch){state.userBookings.sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));persistState();if(window.renderMyBookings)renderMyBookings();if(nq&&!silent)toast('💬 You received a price quote — open Bookings to accept or decline')}
+  quoteDot()}
+const _sv2=window.showView;window.showView=function(v,p){if(v==='mybookings'||v==='home')pull(true);return _sv2(v,p)};
+const _lc2=window.loginAsCustomer;window.loginAsCustomer=function(){_lc2.apply(this,arguments);pull()};
+const _apq=window.acceptPriceQuote;window.acceptPriceQuote=function(){_apq.apply(this,arguments);syncBk();quoteDot()};
+window.declinePriceQuote=function(id){if(!confirm('Decline this price quote?'))return;const r=_raw(id);if(!r)return;r.quoteStatus='declined';r.updatedAt=new Date().toISOString();persistState();syncBk();renderMyBookings();quoteDot();toast('Quote declined. The operator has been notified.')};
+const _nm=window._norm;window._norm=function(b){const n=_nm(b);if(b.status==='declined'){n.status='pending';n.opDeclined=true}return n};
+const _bc=window._bookingCard;
+window._bookingCard=function(b){let h=_bc(b);const id=E(b.id),qd=b.status==='pending'&&b.quoteStatus==='declined';
+  if(b.status==='pending'&&b.quoteStatus==='quoted'&&b.price&&!b.opDeclined){
+    h=h.replace('Accept price &amp; request confirmation</button>','Accept price &amp; request confirmation</button><button onclick="declinePriceQuote(\''+id+'\')" class="w-full mt-2 bg-white border border-red-200 text-red-500 text-xs font-bold font-body py-2.5 rounded-xl"><i class="fa-solid fa-xmark mr-1.5"></i>Decline this quote</button>').replace('Pending request','Quote received')}
+  if(qd||b.opDeclined){const i=h.search(/<div class="bg-(gray-50 border border-gray-100|gold-pale border border-gold\/30) rounded-2xl p-4">/);
+    if(i>-1){const box=qd?`<div class="bg-red-50 border border-red-100 rounded-2xl p-4"><p class="text-xs text-red-700 font-body"><i class="fa-solid fa-circle-xmark mr-1.5"></i>You declined the quote${b.price?' of <b>'+E(b.price)+'</b>':''}. Ask Nauka for a revised price.</p><button onclick="contactNaukaWhatsApp('${id}')" class="mt-3 w-full bg-white border border-gray-200 text-ink text-xs font-bold font-body py-2.5 rounded-xl"><i class="fa-brands fa-whatsapp text-emerald mr-1.5"></i>Contact Nauka</button></div>`:`<div class="bg-red-50 border border-red-100 rounded-2xl p-4"><p class="text-xs text-red-700 font-body"><i class="fa-solid fa-circle-info mr-1.5"></i>The operator could not accommodate these dates. Please try other dates or another houseboat.</p><button onclick="showView('boats')" class="mt-3 w-full btn-emerald text-white text-xs font-bold font-body py-2.5 rounded-xl">Browse the fleet</button></div>`;
+      h=h.slice(0,i)+box+'\n</div></div>';h=h.replace('Pending request',qd?'Quote declined':'Not available').replace('bg-gold text-white text-xs','bg-red-500 text-white text-xs')}}
+  return h};
+window.addEventListener('storage',e=>{if(e.key===K_BK){pull();if(ST.id&&$('view-agent').classList.contains('active'))OP.body();if($('view-admin').classList.contains('active')&&$('ad-body'))AD.go(AD.t,true)}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()});
+setInterval(()=>pull(),5000);
+document.addEventListener('DOMContentLoaded',()=>pull(true));
+
+/* ═══════════ OPERATOR ONBOARDING ═══════════ */
+const K_APP='alp_applications';
+const apps=()=>load(K_APP,[]);
+const saveApps=a=>{try{localStorage.setItem(K_APP,JSON.stringify(a));return true}catch(e){return false}};
+const AMEN=[['AC Bedrooms','fa-snowflake'],['All Meals Included','fa-utensils'],['WiFi','fa-wifi'],['Sun Deck','fa-sun'],['Welcome Drinks','fa-champagne-glasses'],['Attached Bathrooms','fa-shower'],['Upper Deck Lounge','fa-ship'],['Karimeen Fry','fa-fish'],['Canoe Ride','fa-water'],['Music System','fa-music'],['LED TV','fa-tv'],['Butler Service','fa-bell-concierge']];
+const NUMW=['One','Two','Three','Four','Five','Six'];
+function materialize(a){const d=a.d,id=a.opId;
+  if(!PROPERTIES.some(p=>p.id===id))PROPERTIES.push({id,category:'houseboat',bedrooms:Number(d.bedrooms),title:d.title,subtitle:NUMW[Number(d.bedrooms)-1]+'-Bedroom Kettuvallam',location:d.loc,price:Number(d.base),rating:5,reviews:0,host:d.business,description:d.desc,amenities:d.amen.map(l=>({icon:(AMEN.find(x=>x[0]===l)||[0,'fa-check'])[1],label:l})),image:d.img,gallery:[]});
+  if(!OPS.some(o=>o.id===id))OPS.push({id,name:d.title,user:d.username,loc:d.loc,price:Number(d.base),rating:5,reviews:0});
+  if(!DB[id]){DB[id]={pass:d.pass,base:Number(d.base),weekend:Number(d.weekend),over:{},blocked:{},prof:{contact:d.contact,phone:d.phone,email:d.email,about:d.desc},fresh:true};saveDB()}}
+apps().filter(a=>a.status==='approved'&&a.opId).forEach(materialize);
+const uErr=u=>{if(!/^[a-z][a-z0-9_]{3,19}$/.test(u))return '4–20 chars: letters, numbers, underscore; start with a letter';if(u.startsWith('admin'))return 'This username is reserved';if(OPS.some(o=>o.user===u)||apps().some(a=>a.d.username===u&&a.status!=='rejected'))return 'Username already taken';return ''};
+function readImg(f,max,cb){const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);cb(c.toDataURL('image/jpeg',.78))};im.src=r.result};r.readAsDataURL(f)}
+const STEPS=['Account','Verify phone','Boat details','Documents','Review & submit'];
+const fld=(k,l,t,ph,x)=>`<div class="mb-3"><label class="xlbl">${l}</label><input id="o-${k}" type="${t}" class="xin" placeholder="${ph}" value="${E(ONB.d[k]||'')}" oninput="ONB.set('${k}',this.value)" ${x||''}/></div>`;
+const ONB={step:0,d:{},otp:'',otpFor:'',ok:false,t:null,
+ el(){let e=$('onb');if(!e){e=document.createElement('div');e.id='onb';e.style.cssText='position:fixed;inset:0;z-index:990;background:#faf9f7;overflow-y:auto;display:none';document.body.appendChild(e)}return e},
+ open(d){this.d=d||{amen:['AC Bedrooms','All Meals Included'],docs:{}};this.step=0;this.ok=false;this.otp='';this.show()},
+ close(){clearInterval(this.t);this.el().style.display='none';document.body.style.overflow=''},
+ set(k,v){this.d[k]=v},
+ back(){if(this.step>0){this.step--;this.show()}else this.close()},
+ show(keep){const e=this.el(),s=this.step,y=e.scrollTop;e.style.display='block';document.body.style.overflow='hidden';
+  if(s===5){e.innerHTML=this.done();e.scrollTop=0;return}
+  e.innerHTML=`<div class="sticky top-0 z-10 px-5 pt-5 pb-3" style="background:rgba(250,249,247,.97);backdrop-filter:blur(16px)"><div style="max-width:480px;margin:0 auto"><div class="flex items-center justify-between mb-3"><button onclick="ONB.back()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-${s?'arrow-left':'xmark'} text-gray-600 text-sm"></i></button><p class="font-display text-lg text-ink">Operator <em>registration</em></p><span class="text-[11px] font-body text-gray-400 w-9 text-right">${s+1}/5</span></div><div class="flex gap-1.5">${STEPS.map((_,i)=>`<div class="flex-1 h-1.5 rounded-full" style="background:${i<=s?'#0d4f3c':'#e5e7eb'}"></div>`).join('')}</div><p class="text-xs font-body text-emerald font-semibold mt-2">${STEPS[s]}</p></div></div>
+  <div class="px-5 pt-3 pb-32" style="max-width:480px;margin:0 auto">${this['s'+s]()}</div>
+  <div class="fixed bottom-0 left-0 right-0 px-5 py-4" style="background:rgba(250,249,247,.97);border-top:1px solid #eef0ef"><div style="max-width:480px;margin:0 auto"><button onclick="ONB.next()" class="btn-emerald w-full text-white font-semibold text-sm rounded-2xl py-3.5 font-body">${['Continue','Verify and continue','Continue','Review application','Submit application'][s]}</button></div></div>`;
+  e.scrollTop=keep?y:0;if(s===1)this.timer()},
+ s0(){const d=this.d;return `<h2 class="font-display text-3xl font-light text-ink mb-1">Create your <em>account</em></h2><p class="text-gray-400 text-sm font-body mb-5">List your houseboat on Nauka and receive bookings directly.</p>
+  ${fld('business','Business / company name','text','e.g. Backwater Dreams')}${fld('contact','Contact person','text','Full name')}${fld('phone','Mobile number','tel','10-digit number','maxlength="10" inputmode="numeric"')}${fld('email','Business email','email','you@business.com')}
+  <div class="mb-3"><label class="xlbl">Choose a username</label><input id="o-username" class="xin" autocapitalize="none" autocomplete="off" placeholder="e.g. backwaterdreams" value="${E(d.username||'')}" oninput="ONB.uchk(this)"/><p id="o-uh" class="text-[11px] font-body mt-1"></p></div>
+  <div class="mb-3"><label class="xlbl">Password</label><div class="relative"><input id="o-pass" type="password" class="xin" style="padding-right:3rem" placeholder="Min 8 chars, letters &amp; numbers" value="${E(d.pass||'')}" oninput="ONB.set('pass',this.value);ONB.meter()"/><button type="button" onclick="const i=document.getElementById('o-pass');i.type=i.type==='password'?'text':'password'" class="absolute text-gray-400 text-xs font-semibold" style="right:12px;top:13px">Show</button></div><div class="flex gap-1 mt-2" id="o-mt">${[0,1,2,3].map(()=>'<div class="flex-1 h-1 rounded-full bg-gray-200"></div>').join('')}</div><p id="o-ml" class="text-[11px] font-body text-gray-400 mt-1"></p></div>
+  ${fld('pass2','Confirm password','password','Re-enter password')}<p class="text-[11px] text-gray-400 font-body leading-relaxed">By continuing you agree to a one-time mobile verification in the next step.</p>`},
+ uchk(i){i.value=i.value.toLowerCase().replace(/\s/g,'');this.d.username=i.value;const h=$('o-uh'),m=i.value?uErr(i.value):'';h.textContent=i.value?(m||'✓ Username is available'):'';h.style.color=m?'#dc2626':'#0d4f3c'},
+ meter(){const p=this.d.pass||'',sc=(p.length>=8)+(/[A-Z]/.test(p)&&/[a-z]/.test(p))+/\d/.test(p)+/[^A-Za-z0-9]/.test(p),c=['#e5e7eb','#ef4444','#f59e0b','#84cc16','#0d4f3c'][p?Math.max(1,sc):0];[...$('o-mt').children].forEach((b,i)=>b.style.background=i<sc?c:'#e5e7eb');$('o-ml').textContent=p?['Weak','Weak','Fair','Good','Strong'][sc]:''},
+ v0(){const d=this.d,t=k=>(d[k]||'').trim();if(t('business').length<3)return 'Enter your business name';if(t('contact').length<3)return 'Enter the contact person name';if(!/^[6-9]\d{9}$/.test(t('phone')))return 'Enter a valid 10-digit mobile number';if(!/^\S+@\S+\.\S+$/.test(t('email')))return 'Enter a valid email address';
+  const u=uErr(d.username||'');if(u)return u;const p=d.pass||'';if(p.length<8||!/[A-Za-z]/.test(p)||!/\d/.test(p))return 'Password needs 8+ characters with letters and numbers';if(p!==d.pass2)return 'Passwords do not match';return ''},
+ s1(){const ph=this.d.phone||'';return `<h2 class="font-display text-3xl font-light text-ink mb-1">Verify your <em>number</em></h2><p class="text-gray-400 text-sm font-body mb-4">Enter the 4-digit code sent to +91 ${E(ph.slice(0,2))}••••••${E(ph.slice(-2))}</p>
+  <div class="rounded-2xl p-3 mb-5 text-xs font-body" style="background:#fdf8ec;border:1px solid #efdca4;color:#7a5a10"><b>Demo mode:</b> no SMS gateway is connected, so your code is <b style="letter-spacing:.15em">${this.otp}</b></div>
+  <div class="flex gap-2 justify-center mb-4">${[0,1,2,3].map(i=>`<input class="otpb xin" maxlength="1" inputmode="numeric" style="width:46px;height:54px;text-align:center;font-size:1.3rem;font-weight:700;padding:0" oninput="ONB.ob(this,${i})" onkeydown="ONB.ok2(event,${i})"/>`).join('')}</div>
+  <p class="text-center text-xs font-body text-gray-400"><span id="otp-t"></span> <button id="otp-r" onclick="ONB.resend()" class="text-emerald font-semibold hidden">Resend code</button></p>`},
+ ob(el,i){el.value=el.value.replace(/\D/g,'');const b=document.querySelectorAll('.otpb');if(el.value&&b[i+1])b[i+1].focus()},
+ ok2(e,i){if(e.key==='Backspace'&&!e.target.value){const b=document.querySelectorAll('.otpb');if(b[i-1])b[i-1].focus()}},
+ timer(){clearInterval(this.t);let n=30;const t=$('otp-t'),r=$('otp-r');this.t=setInterval(()=>{n--;if(!$('otp-t')){clearInterval(this.t);return}if(n<=0){clearInterval(this.t);t.textContent='';r.classList.remove('hidden')}else t.textContent='Resend code in '+n+'s'},1000);t.textContent='Resend code in 30s'},
+ resend(){this.otp='1234';this.show();toast('New code generated')},
+ v1(){if(this.ok)return '';const c=[...document.querySelectorAll('.otpb')].map(x=>x.value).join('');if(c.length<4)return 'Enter the 4-digit code';if(c!==this.otp)return 'Incorrect code. Try again.';this.ok=true;clearInterval(this.t);return ''},
+ s2(){const d=this.d;return `<h2 class="font-display text-3xl font-light text-ink mb-1">Your <em>houseboat</em></h2><p class="text-gray-400 text-sm font-body mb-5">This is what guests will see in the Fleet.</p>
+  ${fld('title','Houseboat name','text','e.g. Lake Breeze Houseboat')}
+  <label class="xlbl">Bedrooms</label><div class="flex gap-2 mb-3">${[1,2,3,4,5,6].map(n=>`<button onclick="ONB.set('bedrooms',${n});ONB.show(true)" class="flex-1 py-2.5 rounded-xl text-sm font-bold font-body" style="${Number(d.bedrooms)===n?'background:#0d4f3c;color:#fff':'background:#fff;border:1.5px solid #e5e7eb;color:#4b5563'}">${n}</button>`).join('')}</div>
+  <div class="grid grid-cols-2 gap-3">${fld('base','Weekday price ₹','number','e.g. 14000')}${fld('weekend','Weekend price ₹','number','e.g. 18000')}</div>
+  <div class="mb-3"><label class="xlbl">Boarding location</label><input id="o-loc" class="xin" list="o-locs" placeholder="e.g. Finishing Point, Punnamada" value="${E(d.loc||'')}" oninput="ONB.set('loc',this.value)"/><datalist id="o-locs"><option>Punnamada Lake, Alappuzha</option><option>Finishing Point, Punnamada</option><option>Vembanad Lake, Alappuzha</option><option>Kuttanad Backwaters</option><option>Alleppey Canal Network</option></datalist></div>
+  <div class="mb-3"><label class="xlbl">Description (min 30 characters)</label><textarea class="xin" rows="3" placeholder="Describe the cruise experience…" oninput="ONB.set('desc',this.value)">${E(d.desc||'')}</textarea></div>
+  <label class="xlbl">Amenities</label><div class="flex flex-wrap gap-2 mb-4">${AMEN.map(([l])=>{const on=(d.amen||[]).includes(l);return `<button onclick="ONB.am('${l}')" class="xchip" style="padding:7px 12px;${on?'background:#0d4f3c;color:#fff':'background:#fff;color:#4b5563;border:1px solid #e5e7eb'}">${l}</button>`}).join('')}</div>
+  <label class="xlbl">Cover photo</label><label class="block rounded-2xl overflow-hidden cursor-pointer" style="border:2px dashed #cbd5d1;background:#fff">${d.img?`<img src="${d.img}" style="width:100%;height:170px;object-fit:cover"/>`:`<div class="text-center py-9"><i class="fa-solid fa-camera text-emerald text-2xl"></i><p class="text-sm font-body font-semibold text-ink mt-2">Upload a clear photo of your boat</p></div>`}<input type="file" accept="image/*" class="hidden" onchange="ONB.photo(this)"/></label>${d.img?'<p class="text-[11px] text-emerald font-body mt-1">✓ Photo added · tap to change</p>':''}`},
+ am(l){const a=this.d.amen=this.d.amen||[],i=a.indexOf(l);i<0?a.push(l):a.splice(i,1);this.show(true)},
+ photo(i){const f=i.files[0];if(!f)return;if(!f.type.startsWith('image/'))return toast('Choose an image file',true);readImg(f,900,u=>{this.d.img=u;this.show(true)})},
+ v2(){const d=this.d,t=k=>(d[k]||'').trim();if(t('title').length<3)return 'Enter the houseboat name';if(!d.bedrooms)return 'Select the number of bedrooms';if(!(Number(d.base)>0)||!(Number(d.weekend)>0))return 'Enter weekday and weekend prices';if(t('loc').length<3)return 'Enter the boarding location';if(t('desc').length<30)return 'Description needs at least 30 characters';if(!(d.amen||[]).length)return 'Select at least one amenity';if(!d.img)return 'Upload a cover photo';return ''},
+ up(k,l,sub){const h=(this.d.docs||{})[k];return `<label class="block xcard p-3 mb-3 cursor-pointer"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:${h?'#e8f2ee':'#f3f4f6'}"><i class="fa-solid ${h?'fa-check text-emerald':'fa-upload text-gray-400'} text-sm"></i></div><div class="flex-1 min-w-0"><p class="font-body font-semibold text-sm text-ink">${l}</p><p class="text-[11px] text-gray-400 font-body truncate">${h?E(h.name):sub}</p></div><span class="text-emerald text-xs font-semibold">${h?'Change':'Upload'}</span></div><input type="file" accept="image/*,.pdf" class="hidden" onchange="ONB.doc('${k}',this)"/></label>`},
+ s3(){return `<h2 class="font-display text-3xl font-light text-ink mb-1">Verify your <em>business</em></h2><p class="text-gray-400 text-sm font-body mb-5">Our team reviews these documents before your listing goes live. Images or PDF, up to 5 MB each.</p>${this.up('pan','PAN card','Owner or business PAN')}${this.up('aad','Aadhaar card','Owner identity proof')}${this.up('cert','Boat registration / licence','Tourism department or port registration')}${fld('gst','GST number (optional)','text','e.g. 32ABCDE1234F1Z5','maxlength="15"')}`},
+ doc(k,i){const f=i.files[0];if(!f)return;if(f.size>5*1048576)return toast('File is larger than 5 MB',true);this.d.docs=this.d.docs||{};this.d.docs[k]={name:f.name};this.show(true)},
+ v3(){const o=this.d.docs||{};return(o.pan&&o.aad&&o.cert)?'':'Upload PAN, Aadhaar and boat registration'},
+ s4(){const d=this.d,r=(l,v)=>`<div class="flex justify-between gap-3 py-1.5 text-xs font-body border-b border-gray-100 last:border-0"><span class="text-gray-400">${l}</span><span class="font-semibold text-ink text-right">${v}</span></div>`;
+  return `<h2 class="font-display text-3xl font-light text-ink mb-1">Review &amp; <em>submit</em></h2><p class="text-gray-400 text-sm font-body mb-4">Check your details. You can go back to edit anything.</p>
+  <div class="xcard overflow-hidden mb-3">${d.img?`<img src="${d.img}" style="width:100%;height:130px;object-fit:cover"/>`:''}<div class="p-4"><p class="font-body font-bold text-ink">${E(d.title)}</p><p class="text-xs text-gray-400 font-body">${d.bedrooms} bedroom · ${E(d.loc)}</p><p class="text-xs font-body mt-1">Weekday <b>${inr(d.base)}</b> · Weekend <b>${inr(d.weekend)}</b></p></div></div>
+  <div class="xcard p-4 mb-3">${r('Business',E(d.business))}${r('Contact',E(d.contact))}${r('Mobile','+91 '+E(d.phone)+' ✓')}${r('Email',E(d.email))}${r('Username','@'+E(d.username))}${r('Documents','PAN · Aadhaar · Registration')}</div>
+  <label class="flex gap-2 items-start text-xs font-body text-gray-600 leading-relaxed"><input id="o-terms" type="checkbox" style="width:18px;height:18px;margin-top:1px;accent-color:#0d4f3c"/><span>I confirm the information is accurate and agree to the operator terms and platform commission.</span></label>`},
+ v4(){return $('o-terms')&&$('o-terms').checked?'':'Please accept the terms to submit'},
+ next(){const s=this.step,m=this['v'+s]();if(m)return toast(m,true);
+  if(s===0&&(!this.ok||this.otpFor!==this.d.phone)){this.ok=false;this.otpFor=this.d.phone;this.otp='1234'}
+  if(s===4)return this.submit();this.step++;this.show()},
+ submit(){const l=apps(),ref='OP-'+Math.random().toString(36).slice(2,8).toUpperCase(),d=JSON.parse(JSON.stringify(this.d));
+  l.push({ref,status:'pending',createdAt:new Date().toISOString(),d,docOk:{},reason:'',opId:null});
+  if(!saveApps(l))return toast('Storage is full. Try a smaller photo.',true);this.ref=ref;this.step=5;this.show()},
+ done(){const st=[['Application submitted',1],['Document verification',0],['Approval by our team',0],['Listing goes live',0]];
+  return `<div class="px-6 py-12 text-center" style="max-width:480px;margin:0 auto"><div class="success-ring bg-emerald-mist mx-auto mb-4"><div class="success-check w-12 h-12 rounded-full bg-emerald flex items-center justify-center"><i class="fa-solid fa-check text-white text-xl"></i></div></div><h2 class="font-display text-3xl font-light text-ink">Application <em>received</em></h2><p class="text-gray-500 text-sm font-body mt-1 mb-4">We usually review within 48 hours.</p>
+  <div class="xcard p-4 mb-4"><p class="adth">Reference number</p><p class="font-mono font-bold text-xl text-ink tracking-widest">${this.ref}</p><p class="text-[11px] text-gray-400 font-body mt-1">Keep this to track your status. Username: <b>@${E(this.d.username)}</b></p></div>
+  <div class="xcard p-4 text-left mb-5">${st.map(([l,o],i)=>`<div class="flex items-center gap-3 py-2"><div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:${o?'#0d4f3c':'#e5e7eb'};color:${o?'#fff':'#9ca3af'}">${o?'✓':i+1}</div><p class="text-sm font-body ${o?'font-semibold text-ink':'text-gray-400'}">${l}</p></div>`).join('')}</div>
+  <button onclick="ONB.close();ONB.track('${this.ref}')" class="btn-emerald w-full text-white font-semibold text-sm rounded-2xl py-3.5 font-body mb-2">Track my application</button><button onclick="ONB.close();showView('login')" class="w-full py-3 text-sm font-body text-gray-500">Back to login</button></div>`},
+ track(ref){sheet(`<div class="flex items-center justify-between mb-3"><h3 class="font-display text-2xl text-ink">Track <em>application</em></h3><button onclick="closeSheet()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-gray-500 text-sm"></i></button></div><label class="xlbl">Reference number</label><input id="t-r" class="xin mb-3" placeholder="OP-XXXXXX" value="${E(ref||'')}"/><label class="xlbl">Registered mobile</label><input id="t-p" class="xin mb-3" type="tel" placeholder="10-digit number" maxlength="10"/><button onclick="ONB.trackGo()" class="xbtn xbtn-em w-full">Check status</button><div id="t-out" class="mt-4"></div>`)},
+ trackGo(){const r=$('t-r').value.trim().toUpperCase(),p=$('t-p').value.trim(),a=apps().find(x=>x.ref===r&&x.d.phone===p);const o=$('t-out');
+  if(!a){o.innerHTML='<p class="text-xs text-red-600 font-body">No application found with these details.</p>';return}
+  const m={pending:['Under review','s-pending','Our team is verifying your documents.'],approved:['Approved','s-confirmed','You can now log in with your username and password.'],rejected:['Rejected','s-declined','Reason: '+E(a.reason)]}[a.status];
+  o.innerHTML=`<div class="xcard p-4"><div class="flex items-center justify-between"><p class="font-body font-bold text-sm text-ink">${E(a.d.business)}</p><span class="xchip ${m[1]}">${m[0]}</span></div><p class="text-xs text-gray-500 font-body mt-2">${m[2]}</p>${a.status==='rejected'?`<button onclick="ONB.reapply('${a.ref}')" class="xbtn xbtn-gold w-full mt-3">Edit &amp; reapply</button>`:''}</div>`},
+ reapply(ref){const a=apps().find(x=>x.ref===ref);if(!a)return;closeSheet();const d=JSON.parse(JSON.stringify(a.d));d.pass2=d.pass;this.open(d)},
+ forgot(){sheet(`<div class="flex items-center justify-between mb-3"><h3 class="font-display text-2xl text-ink">Reset <em>password</em></h3><button onclick="closeSheet()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-gray-500 text-sm"></i></button></div><label class="xlbl">Username</label><input id="fp-u" class="xin mb-3" autocapitalize="none"/><label class="xlbl">Registered mobile</label><input id="fp-p" type="tel" class="xin mb-3" maxlength="10"/><button onclick="ONB.fpSend()" class="xbtn xbtn-em w-full">Send verification code</button>`)},
+ fpSend(){const u=$('fp-u').value.trim().toLowerCase(),ph=$('fp-p').value.replace(/\D/g,'').slice(-10),o=OPS.find(x=>x.user===u),reg=o?String(od(o.id).prof.phone||'').replace(/\D/g,'').slice(-10):'';
+  if(!o||!reg||reg!==ph)return toast('Details do not match our records. Contact the administrator.',true);this.fo=o;this.fc=String(Math.floor(100000+Math.random()*900000));
+  sheet(`<h3 class="font-display text-2xl text-ink mb-3">Enter <em>code</em></h3><div class="rounded-2xl p-3 mb-4 text-xs font-body" style="background:#fdf8ec;border:1px solid #efdca4;color:#7a5a10"><b>Demo mode:</b> your code is <b>${this.fc}</b></div><label class="xlbl">6-digit code</label><input id="fp-c" class="xin mb-3" inputmode="numeric" maxlength="6"/><label class="xlbl">New password (min 6)</label><input id="fp-n" type="password" class="xin mb-3"/><button onclick="ONB.fpDo()" class="xbtn xbtn-em w-full">Reset password</button>`)},
+ fpDo(){if($('fp-c').value!==this.fc)return toast('Incorrect code',true);const n=$('fp-n').value;if(n.length<6)return toast('Password must be 6+ characters',true);od(this.fo.id).pass=n;saveDB();closeSheet();toast('Password reset. You can log in now.')}
+};
+window.ONB=ONB;
+
+/* admin: applications tab */
+AD.af='pending';
+const APL={pending:['Pending','s-pending'],approved:['Approved','s-confirmed'],rejected:['Rejected','s-declined']};
+AD.applications=function(){const l=apps(),f=this.af;return `<div class="flex gap-1.5 mb-3">${Object.entries(APL).map(([k,[lb]])=>`<button onclick="AD.af='${k}';AD.go('applications',true)" class="xchip flex-1" style="padding:8px;${k===f?'background:#082e23;color:#e8c97a':'background:#fff;color:#64748b;border:1px solid #e5e7eb'}">${lb} · ${l.filter(a=>a.status===k).length}</button>`).join('')}</div>`+
+  (l.filter(a=>a.status===f).length?l.filter(a=>a.status===f).reverse().map(a=>`<div onclick="AD.app('${a.ref}')" class="xcard p-4 mb-3 cursor-pointer"><div class="flex items-start justify-between gap-2"><div class="min-w-0"><p class="font-body font-bold text-sm text-ink truncate">${E(a.d.business)}</p><p class="text-xs text-emerald font-semibold font-body">@${E(a.d.username)} · <span class="font-mono text-gray-400">${a.ref}</span></p><p class="text-[11px] text-gray-400 font-body">${E(a.d.title)} · ${a.d.bedrooms} BR · ${formatDate(a.createdAt.slice(0,10))}</p></div><span class="xchip ${APL[a.status][1]}">${APL[a.status][0]}</span></div></div>`).join(''):empty('fa-user-plus','No '+f+' applications','New operator registrations appear here.'))};
+AD.app=function(ref){const a=apps().find(x=>x.ref===ref);if(!a)return;const d=a.d,r=(l,v)=>`<div class="flex justify-between gap-3 py-1.5 text-xs font-body border-b border-gray-100 last:border-0"><span class="text-gray-400">${l}</span><span class="font-semibold text-ink text-right">${v}</span></div>`;
+  const docs=[['pan','PAN card'],['aad','Aadhaar card'],['cert','Boat registration']].map(([k,l])=>`<label class="flex items-center gap-3 py-2 border-b border-gray-100 last:border-0"><input type="checkbox" ${a.docOk&&a.docOk[k]?'checked':''} ${a.status!=='pending'?'disabled':''} onchange="AD.docOk('${a.ref}','${k}',this.checked)" style="width:18px;height:18px;accent-color:#0d4f3c"/><span class="flex-1 min-w-0"><span class="block text-xs font-semibold font-body text-ink">${l}</span><span class="block text-[11px] text-gray-400 font-body truncate">${E((d.docs[k]||{}).name||'—')}</span></span></label>`).join('');
+  sheet(`<div class="flex items-start justify-between mb-3"><div><h3 class="font-display text-2xl text-ink leading-tight">${E(d.business)}</h3><p class="text-[11px] text-gray-400 font-mono">${a.ref}</p></div><button onclick="closeSheet()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center"><i class="fa-solid fa-xmark text-gray-500 text-sm"></i></button></div>
+  ${d.img?`<img src="${d.img}" style="width:100%;height:140px;object-fit:cover;border-radius:1rem" class="mb-3"/>`:''}
+  <div class="xcard p-4 mb-3"><p class="adth mb-1">Boat</p>${r('Name',E(d.title))}${r('Bedrooms',d.bedrooms)}${r('Weekday / weekend',inr(d.base)+' / '+inr(d.weekend))}${r('Boarding',E(d.loc))}${r('Amenities',E((d.amen||[]).join(', ')))}</div>
+  <div class="xcard p-4 mb-3"><p class="adth mb-1">Contact</p>${r('Person',E(d.contact))}${r('Mobile','+91 '+E(d.phone)+' <span class="text-emerald">✓ verified</span>')}${r('Email',E(d.email))}${r('Username','@'+E(d.username))}${d.gst?r('GST',E(d.gst)):''}</div>
+  <div class="xcard p-4 mb-3"><p class="adth mb-1">Document checklist</p>${docs}</div>
+  ${a.status==='pending'?`<button onclick="AD.approve('${a.ref}')" class="xbtn xbtn-em w-full mb-3">Approve &amp; publish listing</button><label class="xlbl">Rejection reason</label><textarea id="x-rr" rows="2" class="xin mb-2" placeholder="Explain what needs fixing"></textarea><button onclick="AD.reject('${a.ref}')" class="xbtn xbtn-red w-full">Reject application</button>`:`<p class="text-xs font-body text-gray-500">Status: <b>${APL[a.status][0]}</b>${a.reason?' — '+E(a.reason):''}</p>`}`)};
+AD.docOk=function(ref,k,v){const l=apps(),a=l.find(x=>x.ref===ref);if(!a)return;a.docOk=a.docOk||{};a.docOk[k]=v;saveApps(l)};
+AD.approve=function(ref){const l=apps(),a=l.find(x=>x.ref===ref);if(!a)return;if(!['pan','aad','cert'].every(k=>a.docOk&&a.docOk[k]))return toast('Tick all three documents as verified first',true);
+  a.status='approved';a.reviewedAt=new Date().toISOString();a.opId=301+l.filter(x=>x.opId).length;saveApps(l);materialize(a);closeSheet();toast('Operator approved — listing is live');if(window.renderProperties)renderProperties();AD.go('applications',true)};
+AD.reject=function(ref){const t=($('x-rr').value||'').trim();if(t.length<10)return toast('Enter a reason (min 10 characters)',true);const l=apps(),a=l.find(x=>x.ref===ref);if(!a)return;a.status='rejected';a.reason=t;a.reviewedAt=new Date().toISOString();saveApps(l);closeSheet();toast('Application rejected');AD.go('applications',true)};
+const _ado=AD.overview;AD.overview=function(){const n=apps().filter(a=>a.status==='pending').length;return(n?`<div onclick="AD.go('applications')" class="xcard p-4 mb-4 flex items-center gap-3 cursor-pointer" style="background:#fffbeb;border-color:#fde68a"><i class="fa-solid fa-user-clock text-yellow-600"></i><div class="flex-1"><p class="font-body font-semibold text-sm text-ink">${n} operator application${n>1?'s':''} awaiting review</p><p class="text-[11px] text-gray-500 font-body">Tap to verify documents and approve</p></div><i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i></div>`:'')+_ado.call(this)};
+const _ago=AD.go;AD.go=function(t,k){_ago.call(this,t,k);const b=$('adt-applications');if(b){const n=apps().filter(a=>a.status==='pending').length;b.textContent='Applications'+(n?' · '+n:'')}};
+/* first-login welcome for newly approved operators */
+const _orn=OP.render;OP.render=function(){_orn.call(this);const d=od(ST.id);if(d.fresh){d.fresh=false;saveDB();const o=opById(ST.id);setTimeout(()=>sheet(`<div class="text-center"><div class="w-16 h-16 mx-auto rounded-3xl flex items-center justify-center font-display text-3xl text-gold mb-3" style="background:#082e23">${E(o.name[0])}</div><h3 class="font-display text-2xl text-ink">Welcome aboard, <em>${E(d.prof.contact.split(' ')[0]||'captain')}</em>!</h3><p class="text-gray-500 text-sm font-body mt-1 mb-4">Your listing is now live in the Fleet.</p></div><div class="xcard p-4 text-left mb-4">${[['Review your rates','Pricing tab — set weekend and date prices'],['Complete your profile','Profile tab — add about text and contact'],['Respond within 24 hours','Bookings tab — send quotes to guests']].map(([a,b],i)=>`<div class="flex gap-3 py-2"><div class="w-6 h-6 rounded-full bg-emerald text-white text-[11px] font-bold flex items-center justify-center flex-shrink-0">${i+1}</div><div><p class="text-sm font-semibold font-body text-ink">${a}</p><p class="text-[11px] text-gray-400 font-body">${b}</p></div></div>`).join('')}</div><button onclick="closeSheet();OP.tab('pricing')" class="xbtn xbtn-em w-full">Set my rates</button>`),400)}};
+/* admin login screen hooks */
+document.addEventListener('DOMContentLoaded',()=>{const pw=$('agent-login-pass');if(!pw)return;
+  pw.parentElement.insertAdjacentHTML('beforeend','<div class="flex justify-start mt-2"><button type="button" onclick="const i=document.getElementById(\'agent-login-pass\');i.type=i.type===\'password\'?\'text\':\'password\'" class="text-gray-500 text-xs font-semibold font-body">Show password</button></div>')});
+})();
+</script>
+
+<style id="nk-v3">
+.xrow{background:#fff;border:1px solid #eef0ef;border-radius:1.1rem;padding:.8rem 1rem;margin-bottom:.65rem;box-shadow:0 4px 18px rgba(13,79,60,.07);transition:transform .15s}.xrow:active{transform:scale(.985)}
+#bookingModal{padding-top:env(safe-area-inset-top,0px)}
+#bookingModal .modal-sheet{max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;background:#fff!important;border-radius:28px 28px 0 0;box-shadow:0 -24px 60px rgba(8,46,35,.35)}
+#bookingModal .modal-sheet>.flex.justify-center{position:sticky;top:0;z-index:6;background:#fff}
+#bookingModal .px-6{padding:0 1.25rem calc(1.4rem + env(safe-area-inset-bottom,0px))}
+#bookingModal .px-6>.flex.items-center.justify-between.mb-5{position:sticky;top:20px;z-index:5;background:#fff;padding:.5rem 0 .85rem;margin-bottom:.6rem;border-bottom:1px solid #eef2f0}
+#bookingModal h3{font-size:1.7rem;line-height:1.1}
+#booking-form{display:grid;gap:1.1rem}#booking-form>*{margin:0!important}
+#bookingModal label{font-size:10.5px;letter-spacing:.1em;color:#0d4f3c;margin-bottom:.5rem;display:block}
+#bookingModal #booking-date{height:54px;border-radius:16px;border:1.5px solid #e3ebe7;background:#fafcfb;font-weight:600}
+#bookingModal .shadow-soft{border-radius:20px;border:1.5px solid #e3ebe7;background:#fafcfb;box-shadow:none}
+#bookingModal .shadow-soft .border-b{border-color:#e3ebe7}
+#bookingModal button[onclick^="change"]{width:38px;height:38px;border-radius:50%;border:none;background:#e8f2ee;color:#0d4f3c;font-size:1.15rem;transition:all .2s}
+#bookingModal button[onclick^="change"]:active{background:#0d4f3c;color:#fff;transform:scale(.92)}
+#bookingModal .flex.items-center.gap-3:has(#booking-nights){background:#fafcfb;border:1.5px solid #e3ebe7;border-radius:20px;padding:.5rem .8rem;justify-content:space-between}
+#bookingModal #booking-nights{width:70px!important;height:44px;border:none;background:transparent;font-size:1.3rem;font-weight:700;padding:0;box-shadow:none}
+#booking-route{display:none}
+.rt{display:flex;align-items:center;gap:.8rem;width:100%;padding:.8rem .95rem;border:1.5px solid #e3ebe7;border-radius:16px;background:#fafcfb;text-align:left;transition:all .2s}
+.rt b{display:block;font:700 .88rem 'Plus Jakarta Sans',sans-serif;color:#1a1a18}.rt small{display:block;font:500 .72rem 'Plus Jakarta Sans',sans-serif;color:#6b7280;margin-top:1px}
+.rt-i{width:38px;height:38px;border-radius:12px;background:#e8f2ee;color:#0d4f3c;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rt-r{width:20px;height:20px;border-radius:50%;border:2px solid #cbd5d1;flex-shrink:0;transition:all .2s}
+.rt.on{border-color:#0d4f3c;background:#e8f2ee;box-shadow:0 0 0 3px rgba(13,79,60,.1)}.rt.on .rt-i{background:#0d4f3c;color:#e8c97a}.rt.on .rt-r{border:6px solid #0d4f3c}
+#bookingModal .bg-emerald-mist.rounded-2xl{background:linear-gradient(135deg,#082e23,#0d4f3c);border-radius:20px;padding:1.1rem 1.2rem}
+#bookingModal .bg-emerald-mist .text-gray-600{color:rgba(255,255,255,.65)!important}
+#bookingModal .bg-emerald-mist .text-ink{color:#fff!important}
+#bookingModal .bg-emerald-mist .text-emerald{color:#e8c97a!important}
+#bookingModal .bg-emerald-mist hr{border-color:rgba(255,255,255,.15)}
+#bookingModal .btn-emerald.w-full{height:56px;border-radius:18px;background:linear-gradient(135deg,#0d4f3c,#1a6b52);box-shadow:0 10px 28px rgba(13,79,60,.35)}
+</style>
+<script>
+(function(){
+document.addEventListener('DOMContentLoaded',()=>{const sel=document.getElementById('booking-route');if(!sel)return;
+ const meta={'Alleppey Backwater Circuit':['fa-water','Overnight · Punnamada & Kuttanad'],'Alleppey to Kumarakom':['fa-dove','Overnight · Vembanad Lake crossing'],'Sunset & Day Cruise':['fa-sun','Day cruise · lunch & sunset']};
+ const box=document.createElement('div');box.id='route-pills';box.style.cssText='display:grid;gap:.55rem';
+ const sync=()=>box.querySelectorAll('.rt').forEach(b=>b.classList.toggle('on',b.dataset.v===sel.value));
+ [...sel.options].filter(o=>o.value).forEach(o=>{const m=meta[o.value]||['fa-route',''],b=document.createElement('button');b.type='button';b.className='rt';b.dataset.v=o.value;
+  b.innerHTML='<span class="rt-i"><i class="fa-solid '+m[0]+'"></i></span><span style="flex:1;min-width:0"><b></b><small>'+m[1]+'</small></span><span class="rt-r"></span>';b.querySelector('b').textContent=o.value;b.onclick=()=>{sel.value=o.value;sync()};box.appendChild(b)});
+ sel.insertAdjacentElement('afterend',box);
+ const w=window._setupRouteField;window._setupRouteField=function(){const r=w.apply(this,arguments);sync();return r};});
+/* return-from-WhatsApp popup */
+const K='nk_wa_pending';
+function pop(){if(document.getElementById('nk-wa-pop'))return;const d=document.createElement('div');d.id='nk-wa-pop';
+ d.style.cssText='position:fixed;inset:0;z-index:3500;background:rgba(8,46,35,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:1.5rem';
+ d.innerHTML='<div style="width:100%;max-width:380px;background:#fff;border-radius:28px;padding:2rem 1.5rem 1.4rem;text-align:center;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:xDialogIn .4s cubic-bezier(.2,.8,.2,1) both"><div style="width:68px;height:68px;border-radius:50%;background:#e8f2ee;margin:0 auto 1rem;display:flex;align-items:center;justify-content:center"><div style="width:44px;height:44px;border-radius:50%;background:#0d4f3c;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-check" style="color:#fff;font-size:18px"></i></div></div><h3 class="font-display" style="font-size:1.7rem;font-weight:400;line-height:1.15;color:#1a1a18">Request <em>received</em></h3><p style="font:500 .92rem/1.55 Plus Jakarta Sans,sans-serif;color:#4b5563;margin:.6rem 0 .3rem">Our team will contact you soon with the best offers!</p><p style="font:500 .8rem/1.5 Plus Jakarta Sans,sans-serif;color:#9ca3af;margin-bottom:1.2rem">We will update our offers in the app too.</p><button id="nk-pop-b" class="btn-emerald" style="width:100%;color:#fff;font:700 .85rem Plus Jakarta Sans,sans-serif;padding:.95rem;border-radius:16px">View my requests</button><button id="nk-pop-c" style="width:100%;margin-top:.4rem;padding:.8rem;font:600 .8rem Plus Jakarta Sans,sans-serif;color:#6b7280">Continue browsing</button></div>';
+ document.body.appendChild(d);const x=()=>d.remove();d.onclick=e=>{if(e.target===d)x()};document.getElementById('nk-pop-c').onclick=x;document.getElementById('nk-pop-b').onclick=()=>{x();showView('mybookings')}}
+function chk(){try{const t=+sessionStorage.getItem(K);if(t&&!document.hidden&&Date.now()-t>1500){sessionStorage.removeItem(K);setTimeout(pop,350)}}catch(e){}}
+document.addEventListener('visibilitychange',chk);window.addEventListener('focus',chk);window.addEventListener('pageshow',chk);
+})();
+</script>
+<style id="nauka-responsive-layer">
+/* ═══════════════════════════════════════════════════════════════
+   NAUKA — RESPONSIVE LAYER (desktop / tablet)
+   • Everything is inside min-width media queries, so phones (<768px)
+     render EXACTLY as before.
+   • CSS only: no markup logic, no JS, no function or ID changes.
+   • Place this <style> as the LAST thing before </body>.
+═══════════════════════════════════════════════════════════════ */
+:root { --xw: 1200px; }
+@media (min-width: 1600px) { :root { --xw: 1360px; } }
+
+@keyframes xDialogIn {
+  from { opacity: 0; transform: translateY(18px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (min-width: 768px) {
+
+  /* ── 1. Release the phone-width column ───────────────────────── */
+  html body { max-width: none !important; margin: 0 !important; }
+
+  /* ── 2. HERO: full-bleed, cinematic, text aligned to the grid ── */
+  #view-home > section:first-child { height: min(82vh, 820px) !important; min-height: 520px; }
+  #view-home > section:first-child > img { object-position: center 45%; }
+  #view-home > section:first-child > .absolute.bottom-0 {
+    padding-left:  max(2rem, calc((100% - var(--xw)) / 2 + 1.25rem)) !important;
+    padding-right: max(2rem, calc((100% - var(--xw)) / 2 + 1.25rem)) !important;
+    padding-bottom: 4.5rem !important;
+  }
+  #view-home > section:first-child h1 {
+    font-size: clamp(3rem, 5.5vw, 5rem) !important;
+    margin-bottom: .5rem;
+  }
+  #view-home > section:first-child p { font-size: 1.1rem; }
+  .nk-hero-logo { height: clamp(76px, 7vw, 112px); }
+  #view-login .nk-logo { height: 60px !important; }
+
+  /* ── 3. Home content: centred container ──────────────────────── */
+  #view-home > section:not(:first-child) {
+    max-width: var(--xw);
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+  #view-home > section.mx-5 { width: calc(100% - 2.5rem); }
+  #view-home > section.h-40 { height: 13rem; }
+
+  /* ── 4. Page containers ──────────────────────────────────────── */
+  #view-boats, #view-saved, #view-mybookings, #view-tours {
+    max-width: var(--xw);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #view-profile { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+  /* ── 5. Fleet: category chips in one row, cards in a grid ────── */
+  #view-boats .grid.grid-cols-3 {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    max-width: 760px;
+  }
+  #property-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem !important;
+  }
+  #property-list > .text-center { grid-column: 1 / -1; }
+
+  /* ── 6. Saved / My Bookings / Tours grids ────────────────────── */
+  #saved-list, #mybookings-list, #tour-list {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem !important;
+    align-items: start;
+  }
+  #saved-list > .property-card, #mybookings-list > div { margin-bottom: 0 !important; }
+  #saved-list > .flex-col, #mybookings-list > .flex-col, #tour-list > .flex-col { grid-column: 1 / -1; }
+  #mybookings-tabs { max-width: 520px; }
+  #view-tours > div:first-child { margin: 1.25rem 1.25rem 0; border-radius: 1.75rem; height: 14rem; }
+
+  /* ── 7. Property detail: image left (sticky), info right ─────── */
+  #view-detail.active {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    column-gap: 2.5rem;
+    align-items: start;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem 120px;
+  }
+  #view-detail > .relative {
+    grid-column: 1; grid-row: 1 / span 2;
+    position: sticky; top: 1.5rem;
+    border-radius: 1.75rem; overflow: hidden;
+    box-shadow: var(--shadow-float);
+  }
+  #detail-hero-img, #detail-hero-src { height: min(76vh, 700px) !important; }
+  #view-detail > .px-5 { grid-column: 2; grid-row: 1; padding-left: 0; padding-right: 0; padding-top: .5rem; }
+  #view-detail > .sticky-bottom {
+    grid-column: 2; grid-row: 2;
+    position: sticky; bottom: 96px;
+    border: 1px solid #eef0ef; border-radius: 1.25rem;
+  }
+  #view-detail #gallery-img-1, #view-detail #gallery-img-2, #view-detail #gallery-img-3 { height: 8rem; }
+
+  /* ── 8. Login: centred card on branded backdrop ──────────────── */
+  #view-login.active {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 2rem !important;
+    background: linear-gradient(145deg, #082e23 0%, #0d4f3c 55%, #1a7a5e 100%);
+  }
+  #view-login > div {
+    width: 100%; max-width: 480px;
+    min-height: 0 !important;
+    border-radius: 2rem; overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,.35);
+  }
+
+  /* ── 9. Navigation pill: always show labels ──────────────────── */
+  .pill-nav { bottom: calc(24px + env(safe-area-inset-bottom, 0px)); padding: 6px; gap: 6px; }
+  .nav-item { padding: 11px 18px; font-size: .875rem; }
+  .nav-item.active-nav { padding: 11px 20px; }
+  .nav-item .nav-label { display: inline-block; }
+
+  /* ── 10. WhatsApp concierge: bottom-right of the window ──────── */
+  .whatsapp-fab { right: 1.75rem; bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+
+  /* ── 11. Bottom sheets become centred dialogs ────────────────── */
+  #bookingModal, #paymentModal, #listingModal, #previewModal, .admin-modal-overlay {
+    align-items: center; padding: 1.5rem;
+  }
+  .modal-sheet, .payment-sheet, .listing-sheet, .preview-sheet, .admin-modal-sheet {
+    max-width: 520px !important;
+    border-radius: 1.75rem !important;
+    animation: xDialogIn .38s cubic-bezier(.2,.8,.2,1) both !important;
+  }
+  .modal-sheet { max-height: 90vh; overflow-y: auto; }
+  #xsheet { align-items: center; padding: 1.5rem; }
+  #xsheet .sh {
+    max-width: 520px; border-radius: 1.75rem; padding-bottom: 1.5rem;
+    animation: xDialogIn .38s cubic-bezier(.2,.8,.2,1) both;
+  }
+
+  /* Auth sheets → centred dialogs */
+  #auth-sheet, #auth-gate-sheet {
+    bottom: auto; top: 50%;
+    max-width: 460px; max-height: 92vh; overflow-y: auto;
+    border-radius: 2rem;
+    transform: translate(-50%, -46%) scale(.98);
+    opacity: 0; visibility: hidden; pointer-events: none;
+    transition: transform .4s cubic-bezier(.2,.8,.2,1), opacity .3s ease, visibility 0s linear .4s;
+  }
+  #auth-sheet.open, #auth-gate-sheet.open {
+    transform: translate(-50%, -50%);
+    opacity: 1; visibility: visible; pointer-events: auto;
+    transition-delay: 0s;
+  }
+
+  /* Notification drawer docks to the window's right edge */
+  #notif-panel.open { right: 0 !important; }
+
+  /* ── 12. Operator portal ─────────────────────────────────────── */
+  #view-agent > .bg-emerald > .relative { max-width: 960px; margin: 0 auto; }
+  #op-body { max-width: 960px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; }
+
+  /* ── 13. Admin console ───────────────────────────────────────── */
+  #view-admin > div:first-child > .flex { max-width: 1100px; margin: 0 auto; }
+  #view-admin > .overflow-x-auto, #view-admin #ad-body { max-width: 1100px; margin: 0 auto; width: 100%; }
+}
+
+/* ── Wide desktop: 3-column card grids ─────────────────────────── */
+@media (min-width: 1180px) {
+  #property-list, #saved-list, #tour-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ── Accessibility: honour reduced-motion ──────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .modal-sheet, .payment-sheet, .listing-sheet, .preview-sheet, .admin-modal-sheet, #xsheet .sh { animation: none !important; }
+}
+
+</style>
+
 </body>
 </html>
